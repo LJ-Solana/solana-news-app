@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ArticleCard, { ArticleCardProps } from './components/ArticleCard';
-import { FaNewspaper, FaStar, FaClock, FaPlus, FaTrophy } from 'react-icons/fa';
+import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
+import { supabase } from './lib/supabaseClient';
 
 async function getNews() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
@@ -15,7 +16,36 @@ async function getNews() {
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    return await res.json();
+    const newsData = await res.json();
+
+    const slugs = newsData.articles.map((article: Article) => 
+      encodeURIComponent(article.title?.toLowerCase().replace(/ /g, '-') || '')
+    );
+
+    // Query Supabase for verified articles
+    const { data: verifiedArticles, error } = await supabase
+      .from('articles')
+      .select('slug, verifier')
+      .in('slug', slugs);
+
+    if (error) {
+      console.error("Error fetching verified articles:", error);
+    }
+
+    // Create a map of verified articles for quick lookup
+    const verifiedMap = new Map(verifiedArticles?.map(a => [a.slug, a.verifier]) || []);
+
+    // Add verification status to each article
+    const articlesWithVerification = newsData.articles.map((article: Article) => {
+      const slug = encodeURIComponent(article.title?.toLowerCase().replace(/ /g, '-') || '');
+      return {
+        ...article,
+        slug,
+        verifiedBy: verifiedMap.get(slug) || undefined
+      };
+    });
+
+    return { ...newsData, articles: articlesWithVerification };
   } catch (error) {
     console.error("Failed to fetch news:", error);
     return { articles: [] }; 
@@ -80,7 +110,7 @@ export default function Home() {
       const processedArticles = newsData.articles.map((article: Article) => {
         const category = categorizeArticle(article.title, article.description);
         return {
-          slug: encodeURIComponent(article.title?.toLowerCase().replace(/ /g, '-') || ''),
+          slug: article.slug, // Now coming from getNews
           title: article.title || 'Untitled Article',
           description: article.description || "No description available",
           author: article.author || 'Unknown Author',
@@ -89,7 +119,7 @@ export default function Home() {
           category: category,
           icon: categories[category as keyof typeof categories] || '📰',
           urlToImage: article.urlToImage,
-          verifiedBy: article.verifiedBy,
+          verifiedBy: article.verifiedBy, 
         };
       });
       setArticles(processedArticles);
@@ -105,11 +135,9 @@ export default function Home() {
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between mb-4">
-          <div className="flex space-x-4">
-            <Link href="/add-article" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
-              <FaPlus className="mr-2" /> Create New Article
-            </Link>
-           </div>
+          <Link href="/verify-articles" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
+            <FaUserCheck className="mr-2" /> Become a Verifier
+          </Link>
           <div className="flex space-x-4">
             <Link href="/leaderboard" className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
               <FaTrophy className="mr-2" /> Leaderboard

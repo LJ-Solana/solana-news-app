@@ -25,6 +25,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
   const [isVerified, setIsVerified] = useState(!!verifiedBy);
   const [verifier, setVerifier] = useState(verifiedBy);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
   const wallet = useWallet();
 
   const verifyArticle = async () => {
@@ -41,13 +42,13 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
       const message = new TextEncoder().encode(`Verify article: ${slug}`);
       console.log('Encoded message:', message);
       
-      const signature = await wallet.signMessage(message);
-      console.log('Signature obtained:', signature);
+      const signatureBytes = await wallet.signMessage(message);
+      console.log('Signature obtained:', signatureBytes);
       
       const walletAddress = wallet.publicKey.toBase58();
       console.log('Wallet address:', walletAddress);
       
-      const base64Signature = Buffer.from(signature).toString('base64');
+      const base64Signature = Buffer.from(signatureBytes).toString('base64');
       console.log('Base64 signature:', base64Signature);
 
       const result = await handleVerifyArticle(slug, walletAddress, base64Signature);
@@ -56,6 +57,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
       if (result.success) {
         setIsVerified(true);
         setVerifier(walletAddress);
+        setSignature(base64Signature);
         console.log(`Article ${slug} verified by ${walletAddress}`);
         console.log(result.message);
       } else {
@@ -96,17 +98,26 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
             <span>Source: {source.name}</span>
             <span>{icon} {category}</span>
           </div>
-          <div className="text-xs flex items-center mt-2">
-            {isVerified || verifier ? (
-              <span className="text-green-600 flex items-center">
-                <FaCheckCircle className="mr-1" /> 
-                Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
-              </span>
-            ) : (
-              <span className="text-red-600 flex items-center">
-                <FaTimesCircle className="mr-1" /> Unverified
-              </span>
-            )}
+          <div className="text-xs flex justify-between mt-2">
+            <div className="flex flex-col">
+              {isVerified || verifier ? (
+                <span className="text-green-600 flex items-center">
+                  <FaCheckCircle className="mr-1" /> 
+                  Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
+                </span>
+              ) : (
+                <span className="text-red-600 flex items-center">
+                  <FaTimesCircle className="mr-1" /> Unverified
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col text-right">
+              {isVerified || verifier ? (
+                <span className="text-pink-600">
+                  Signature: {signature ? `${signature.slice(0, 4)}...${signature.slice(-4)}` : 'N/A'}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       </Link>
