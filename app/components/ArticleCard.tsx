@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { handleVerifyArticle } from '../lib/articleVerification';
+import VerificationModal from '../components/VerificationModal';
 
 export interface ArticleCardProps {
   slug: string;
@@ -26,6 +27,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
   const [verifier, setVerifier] = useState(verifiedBy);
   const [isVerifying, setIsVerifying] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const wallet = useWallet();
 
   const verifyArticle = async () => {
@@ -60,6 +62,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
         setSignature(base64Signature);
         console.log(`Article ${slug} verified by ${walletAddress}`);
         console.log(result.message);
+        setShowModal(true);
       } else {
         console.log('Verification failed:', result.message);
         console.log(`Verification failed: ${result.message}`);
@@ -77,62 +80,78 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
-      <Link href={`/article/${slug}`} className="block flex-grow">
-        <div className="relative w-full h-48">
-          <Image
-            src={urlToImage || '/placeholder-image.jpg'}
-            alt={title}
-            fill
-            style={{ objectFit: 'cover' }}
-          />
-        </div>
-        <div className="p-4 space-y-3 flex-grow">
-          <h2 className={`font-bold ${featured ? 'text-xl' : 'text-lg'} leading-tight text-gray-800`}>{title}</h2>
-          <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
-          <div className="flex justify-between items-center text-xs text-gray-500">
-            <span className="flex items-center"><FaUser className="mr-1" /> {author}</span>
-            <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
+    <>
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
+        <Link href={`/article/${slug}`} className="block flex-grow">
+          <div className="relative w-full h-48">
+            <Image
+              src={urlToImage || '/placeholder-image.jpg'}
+              alt={title}
+              fill
+              style={{ objectFit: 'cover' }}
+            />
           </div>
-          <div className="text-xs text-gray-600 flex items-center justify-between">
-            <span>Source: {source.name}</span>
-            <span>{icon} {category}</span>
-          </div>
-          <div className="text-xs flex justify-between mt-2">
-            <div className="flex flex-col">
-              {isVerified || verifier ? (
-                <span className="text-green-600 flex items-center">
-                  <FaCheckCircle className="mr-1" /> 
-                  Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
-                </span>
-              ) : (
-                <span className="text-red-600 flex items-center">
-                  <FaTimesCircle className="mr-1" /> Unverified
-                </span>
-              )}
+          <div className="p-4 space-y-3 flex-grow">
+            <h2 className={`font-bold ${featured ? 'text-xl' : 'text-lg'} leading-tight text-gray-800`}>{title}</h2>
+            <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
+            <div className="flex justify-between items-center text-xs text-gray-500">
+              <span className="flex items-center"><FaUser className="mr-1" /> {author}</span>
+              <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
-            <div className="flex flex-col text-right">
-              {isVerified || verifier ? (
-                <span className="text-pink-600">
-                  Signature: {signature ? `${signature.slice(0, 4)}...${signature.slice(-4)}` : 'N/A'}
-                </span>
-              ) : null}
+            <div className="text-xs text-gray-600 flex items-center justify-between">
+              <span>Source: {source.name}</span>
+              <span>{icon} {category}</span>
+            </div>
+            <div className="text-xs flex justify-between mt-2">
+              <div className="flex flex-col">
+                {isVerified || verifier ? (
+                  <span className="text-green-600 flex items-center">
+                    <FaCheckCircle className="mr-1" /> 
+                    Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
+                  </span>
+                ) : (
+                  <span className="text-red-600 flex items-center">
+                    <FaTimesCircle className="mr-1" /> Unverified
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col text-right">
+                {isVerified || verifier ? (
+                  <span className="text-pink-600">
+                    Signature: {signature ? `${signature.slice(0, 4)}...${signature.slice(-4)}` : 'N/A'}
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
+        </Link>
+        <div className="px-4 pb-4 mt-auto flex space-x-2">
+          <button
+            onClick={verifyArticle}
+            className={`flex-1 py-2 rounded-md text-white font-semibold transition duration-300 ${
+              isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+            }`}
+            disabled={isVerified || isVerifying}
+          >
+            {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
+          </button>
+          <Link href={`/article/${slug}`} className="flex-1">
+            <button className="w-full py-2 rounded-md text-white font-semibold transition duration-300 bg-green-500 hover:bg-green-600">
+              Read Summary
+            </button>
+          </Link>
         </div>
-      </Link>
-      <div className="px-4 pb-4 mt-auto">
-        <button
-          onClick={verifyArticle}
-          className={`w-full py-2 rounded-md text-white font-semibold transition duration-300 ${
-            isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-          disabled={isVerified || isVerifying}
-        >
-          {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
-        </button>
       </div>
-    </div>
+      {showModal && (
+        <VerificationModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title={title}
+          verifier={verifier || ''}
+          signature={signature || ''}
+        />
+      )}
+    </>
   );
 };
 
