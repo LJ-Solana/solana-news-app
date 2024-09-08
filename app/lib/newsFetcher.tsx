@@ -1,52 +1,118 @@
+"use client"
+
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { ArticleCardProps } from '../components/ArticleCard';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
-// Move the getNews and categorizeArticle functions here
+const ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
+const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
+
+interface NewsArticle {
+  title: string;
+  description?: string;
+  author: string;
+  urlToImage?: string;
+}
+
+async function fetchNewsFromAPI() {
+  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // Filter out articles with [removed] in the title or description, with unknown authors, or without images
+    const filteredArticles = data.articles.filter((article: NewsArticle) => 
+      !article.title.includes('[removed]') && 
+      !article.description?.includes('[removed]') &&
+      article.author && article.author !== 'unknown' &&
+      article.urlToImage
+    );
+
+    return filteredArticles;
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    return [];
+  }
+}
 
 async function getNews() {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
-    const url = `${baseUrl}/api/news`;
+  try {
+    const newsArticles = await fetchNewsFromAPI();
     
-    try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const newsData = await res.json();
-  
-      const slugs = newsData.articles.map((article: ArticleCardProps) => 
-        encodeURIComponent(article.title?.toLowerCase().replace(/ /g, '-') || '')
+    const articlesWithIds = newsArticles.map((article: ArticleCardProps) => {
+      const id = uuidv4();
+      return {
+        ...article,
+        id,
+        slug: id, // Use the same UUID for both id and slug
+      };
+    });
+
+    // Query Supabase for verified articles
+    const { data: verifiedArticles, error } = await supabase
+      .from('articles')
+      .select('slug, verifier')
+      .in('slug', articlesWithIds.map((a: { slug: string }) => a.slug));
+
+    if (error) {
+      console.error("Error fetching verified articles:", error);
+    }
+
+    // Create a map of verified articles for quick lookup
+    const verifiedMap = new Map(verifiedArticles?.map(a => [a.slug, a.verifier]) || []);
+    
+    // Add verification status to each article
+    const articlesWithVerification = articlesWithIds.map((article: ArticleCardProps) => {
+      const slug = article.slug;
+      return {
+        ...article,
+        slug,
+        verifiedBy: verifiedMap.get(slug) || undefined
+      };
+    });
+
+    // Generate summaries for each article
+    const articlesWithSummaries = await Promise.all(
+        articlesWithVerification.map(async (article: ArticleCardProps) => {
+          const summary = await generateSummary(article.description);
+          return { ...article, summary };
+        })
       );
   
-      // Query Supabase for verified articles
-      const { data: verifiedArticles, error } = await supabase
-        .from('articles')
-        .select('slug, verifier')
-        .in('slug', slugs);
-  
-      if (error) {
-        console.error("Error fetching verified articles:", error);
-      }
-  
-      // Create a map of verified articles for quick lookup
-      const verifiedMap = new Map(verifiedArticles?.map(a => [a.slug, a.verifier]) || []);
-      // Add verification status to each article
-      const articlesWithVerification = newsData.articles.map((article: ArticleCardProps) => {
-        const slug = encodeURIComponent(article.title?.toLowerCase().replace(/ /g, '-') || '');
-        return {
-          ...article,
-          slug,
-          verifiedBy: verifiedMap.get(slug) || undefined
-        };
-      });
-  
-      return { ...newsData, articles: articlesWithVerification };
+      return articlesWithSummaries;
     } catch (error) {
       console.error("Failed to fetch news:", error);
-      return { articles: [] }; 
+      return []; 
     }
   }
+
+async function generateSummary(content: string): Promise<string> {
+  try {
+    const response = await fetch('/api/generate-summary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.summary;
+  } catch (error) {
+    console.error('Error generating summary:', error);
+    return "An error occurred while generating the summary.";
+  }
+}
 
 function categorizeArticle(title: string, description: string): string {
     const text = (title + ' ' + description).toLowerCase();
@@ -83,34 +149,24 @@ export const categories = {
 };
 
 export function useNews() {
-  const [articles, setArticles] = useState<ArticleCardProps[]>([]);
-  const [featuredArticles, setFeaturedArticles] = useState<ArticleCardProps[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<ArticleCardProps[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchNews() {
-      const newsData = await getNews();
-      const processedArticles = newsData.articles.map((article: ArticleCardProps) => {
-        const category = categorizeArticle(article.title, article.description);
-        return {
-          slug: article.slug,
-          title: article.title || 'Untitled Article',
-          description: article.description || "No description available",
-          author: article.author || 'Unknown Author',
-          publishedAt: article.publishedAt,
-          source: article.source || { name: 'Unknown Source' },
-          category: category,
-          icon: categories[category as keyof typeof categories] || '📰',
-          urlToImage: article.urlToImage,
-          verifiedBy: article.verifiedBy, 
-        };
-      });
-      setArticles(processedArticles);
-      setFeaturedArticles(processedArticles.slice(0, 3));
-    }
-    fetchNews();
-  }, []);
+    const [articles, setArticles] = useState<ArticleCardProps[]>([]);
+    const [featuredArticles, setFeaturedArticles] = useState<ArticleCardProps[]>([]);
+    const [filteredArticles, setFilteredArticles] = useState<ArticleCardProps[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+    useEffect(() => {
+      async function fetchNews() {
+        const newsData = await getNews();
+        const processedArticles = newsData.map((article: ArticleCardProps) => ({
+          ...article,
+          category: categorizeArticle(article.title, article.description),
+          icon: categories[categorizeArticle(article.title, article.description) as keyof typeof categories] || '📰',
+        }));
+        setArticles(processedArticles);
+        setFeaturedArticles(processedArticles.slice(0, 3));
+      }
+      fetchNews();
+    }, []);
 
   useEffect(() => {
     const featuredSlugs = new Set(featuredArticles.map(article => article.slug));
@@ -127,5 +183,25 @@ export function useNews() {
     filteredArticles,
     selectedCategory,
     setSelectedCategory
+  };
+}
+
+// Add this new function
+export async function getArticleBySlug(slug: string): Promise<ArticleCardProps | null> {
+  const newsArticles = await fetchNewsFromAPI();
+  const article = newsArticles.find(a => a.slug === slug);
+  
+  if (!article) return null;
+
+  const category = categorizeArticle(article.title, article.description);
+  const summary = await generateSummary(article.description || article.title);
+
+  return {
+    ...article,
+    id: slug,
+    slug,
+    category,
+    icon: categories[category as keyof typeof categories] || '📰',
+    summary,
   };
 }

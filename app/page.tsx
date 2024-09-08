@@ -10,6 +10,8 @@ import { useNews, categories } from './lib/newsFetcher';
 export default function Home() {
   const { featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
 
+
+
   return (
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen">
       <div className="container mx-auto px-4 py-8">
@@ -26,7 +28,7 @@ export default function Home() {
         </div>
         <header className="text-center mb-12">
           <h1 className="text-5xl font-extrabold text-gray-800 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-green-400">Byte News</h1>
-          <p className="text-xl text-gray-600">Your Byte-Sized, <strong>Open</strong> Source for Cutting-Edge News</p>
+          <p className="text-xl text-gray-600">Your Byte-Sized <strong>Open Source</strong> for Cutting-Edge News</p>
         </header>
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">

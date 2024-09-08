@@ -7,6 +7,7 @@ import { handleVerifyArticle } from '../lib/articleVerification';
 import VerificationModal from '../components/VerificationModal';
 
 export interface ArticleCardProps {
+  id: string;
   slug: string;
   title: string;
   description: string;
@@ -20,6 +21,7 @@ export interface ArticleCardProps {
   urlToImage: string | null;
   featured?: boolean;
   verifiedBy?: string;
+  summary?: string;
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false, verifiedBy }) => {
@@ -135,7 +137,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
           >
             {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
           </button>
-          <Link href={`/article/${slug}`} className="flex-1">
+          <Link href={`/article/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, '-'))}`} className="flex-1">
             <button className="w-full py-2 rounded-md text-white font-semibold transition duration-300 bg-green-500 hover:bg-green-600">
               Read Summary
             </button>

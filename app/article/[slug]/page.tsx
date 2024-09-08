@@ -1,20 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { getArticleData } from '../../lib/getArticleData';
+import { GenerateSummary } from './GenerateSummary';
 
-const articles = [
-  {
-    slug: "breakthrough-in-quantum-computing",
-    title: "Breakthrough in Quantum Computing",
-    fullContent: "Scientists have achieved a new milestone in quantum supremacy, paving the way for revolutionary advancements in computing power and cryptography. This breakthrough involves...",
-    author: "Dr. Quantum",
-    date: "Sept 8, 2024",
-    category: "Technology",
-    icon: "🖥️"
-  },
-];
-
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = articles.find(a => a.slug === params.slug);
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const article = await getArticleData(params.slug);
 
   if (!article) {
     return (
@@ -22,7 +14,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         <main className="container mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
           <p className="text-gray-800 leading-relaxed">
-            Sorry, the article youre looking for doesnt exist.
+            Sorry, the article you're looking for doesn't exist.
           </p>
           <Link href="/" className="text-blue-500 hover:underline mt-4 inline-block">
             Return to Home
@@ -39,10 +31,41 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
           <div className="flex items-center mb-4 text-gray-600">
             <span className="mr-4">{article.icon} {article.category}</span>
-            <span className="mr-4">By {article.author}</span>
-            <span>{article.date}</span>
+            <span className="mr-4 flex items-center"><FaUser className="mr-1" /> {article.author}</span>
+            <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(article.publishedAt).toLocaleDateString()}</span>
           </div>
-          <p className="text-gray-800 leading-relaxed">{article.fullContent}</p>
+          {article.urlToImage && (
+            <div className="mb-6 relative w-full h-64 md:h-96">
+              <Image 
+                src={article.urlToImage} 
+                alt={article.title} 
+                fill 
+                style={{ objectFit: 'cover' }} 
+                className="rounded-lg"
+              />
+            </div>
+          )}
+          <div className="mb-4">
+            {article.verifiedBy ? (
+              <span className="text-green-600 flex items-center">
+                <FaCheckCircle className="mr-1" /> 
+                Verified by {`${article.verifiedBy.slice(0, 4)}...${article.verifiedBy.slice(-4)}`}
+              </span>
+            ) : (
+              <span className="text-red-600 flex items-center">
+                <FaTimesCircle className="mr-1" /> Unverified
+              </span>
+            )}
+          </div>
+          <h2 className="text-2xl font-semibold mb-2">AI Summary</h2>
+          <GenerateSummary content={article.description} />
+          <h2 className="text-2xl font-semibold mb-2">Original Article</h2>
+          <p className="text-gray-800 leading-relaxed">{article.description}</p>
+          <div className="mt-6">
+            <Link href="/" className="inline-block text-blue-500 hover:underline">
+              Back to Home
+            </Link>
+          </div>
         </article>
       </main>
     </div>
