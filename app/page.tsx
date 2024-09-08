@@ -1,11 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ArticleCard, { ArticleCardProps } from './components/ArticleCard';
-import { FaNewspaper, FaStar, FaClock, FaPlus, FaCheck, FaTrophy } from 'react-icons/fa';
+import { FaNewspaper, FaStar, FaClock, FaPlus, FaTrophy } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
-import { useState, useEffect } from 'react';
 
 async function getNews() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
@@ -90,7 +89,7 @@ export default function Home() {
           category: category,
           icon: categories[category as keyof typeof categories] || '📰',
           urlToImage: article.urlToImage,
-          verifiedBy: article.verifiedBy, // Add this line
+          verifiedBy: article.verifiedBy,
         };
       });
       setArticles(processedArticles);
@@ -110,10 +109,7 @@ export default function Home() {
             <Link href="/add-article" className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
               <FaPlus className="mr-2" /> Create New Article
             </Link>
-            <Link href="/verify-article" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
-              <FaCheck className="mr-2" /> Verify Articles
-            </Link>
-          </div>
+           </div>
           <div className="flex space-x-4">
             <Link href="/leaderboard" className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center">
               <FaTrophy className="mr-2" /> Leaderboard
@@ -122,8 +118,8 @@ export default function Home() {
           </div>
         </div>
         <header className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold text-gray-800 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-teal-400">Byte News</h1>
-          <p className="text-xl text-gray-600">Your Byte-Sized, Open Source for Cutting-Edge Tech and Science Updates</p>
+          <h1 className="text-5xl font-extrabold text-gray-800 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-green-400">Byte News</h1>
+          <p className="text-xl text-gray-600">Your Byte-Sized, <strong>Open</strong> Source for Cutting-Edge News</p>
         </header>
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">

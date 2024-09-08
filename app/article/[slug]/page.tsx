@@ -1,6 +1,5 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
-import Header from '@/app/components/Header';
+import Link from 'next/link';
 
 const articles = [
   {
@@ -18,12 +17,23 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   const article = articles.find(a => a.slug === params.slug);
 
   if (!article) {
-    notFound();
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <main className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
+          <p className="text-gray-800 leading-relaxed">
+            Sorry, the article youre looking for doesnt exist.
+          </p>
+          <Link href="/" className="text-blue-500 hover:underline mt-4 inline-block">
+            Return to Home
+          </Link>
+        </main>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <article className="bg-white rounded-lg shadow-md p-6">
           <h1 className="text-4xl font-bold mb-4">{article.title}</h1>

@@ -3,8 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { handleVerifyArticle } from '../lib/articleVerification';
 
-// Update the ArticleCardProps interface
 export interface ArticleCardProps {
   slug: string;
   title: string;
@@ -24,31 +24,53 @@ export interface ArticleCardProps {
 const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false, verifiedBy }) => {
   const [isVerified, setIsVerified] = useState(!!verifiedBy);
   const [verifier, setVerifier] = useState(verifiedBy);
+  const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
 
   const verifyArticle = async () => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
-      alert('Please connect your wallet first');
+      console.log('Wallet not connected or missing required properties');
+      console.log('Please connect your wallet first');
       return;
     }
 
+    setIsVerifying(true);
+
     try {
-      const message = new TextEncoder().encode(`Verify article: ${title}`);
+      console.log(`Attempting to verify article with slug: ${slug}`);
+      const message = new TextEncoder().encode(`Verify article: ${slug}`);
+      console.log('Encoded message:', message);
+      
       const signature = await wallet.signMessage(message);
+      console.log('Signature obtained:', signature);
       
-      // Here you would typically send the signature to your backend for verification
-      // For this example, we'll just set it as verified
-      setIsVerified(true);
-      
-      // Use the signature in some way to avoid the unused variable warning
-      console.log('Article verified with signature:', signature);
-      // In a real application, you'd update this on the server and then refresh the data
       const walletAddress = wallet.publicKey.toBase58();
-      setVerifier(walletAddress);
-      alert('Article verified successfully!');
+      console.log('Wallet address:', walletAddress);
+      
+      const base64Signature = Buffer.from(signature).toString('base64');
+      console.log('Base64 signature:', base64Signature);
+
+      const result = await handleVerifyArticle(slug, walletAddress, base64Signature);
+      console.log('Verification result:', result);
+
+      if (result.success) {
+        setIsVerified(true);
+        setVerifier(walletAddress);
+        console.log(`Article ${slug} verified by ${walletAddress}`);
+        console.log(result.message);
+      } else {
+        console.log('Verification failed:', result.message);
+        console.log(`Verification failed: ${result.message}`);
+      }
     } catch (error) {
-      console.error('Error verifying article:', error);
-      alert('Failed to verify article. Please try again.');
+      console.log('Error verifying article:', error);
+      if (error instanceof Error) {
+        console.log('Error message:', error.message);
+        console.log('Error stack:', error.stack);
+      }
+      console.log('An unexpected error occurred while verifying the article. Please try again.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -92,11 +114,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
         <button
           onClick={verifyArticle}
           className={`w-full py-2 rounded-md text-white font-semibold transition duration-300 ${
-            isVerified ? 'bg-green-500 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+            isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
           }`}
-          disabled={isVerified}
+          disabled={isVerified || isVerifying}
         >
-          {isVerified ? 'Verified' : 'Verify Article'}
+          {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
         </button>
       </div>
     </div>
