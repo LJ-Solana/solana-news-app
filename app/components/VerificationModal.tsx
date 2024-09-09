@@ -14,7 +14,7 @@ const VerificationModal: React.FC<VerificationModalProps> = ({ isOpen, onClose, 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-3 sm:p-6 w-full max-w-[90vw] sm:max-w-md overflow-y-auto h-[75vh] sm:h-[75vh]">
+      <div className="bg-white rounded-lg p-3 sm:p-6 w-full max-w-[90vw] sm:max-w-md overflow-y-auto">
         <div className="flex flex-col items-center justify-center mb-2 sm:mb-4">
           <FaCheckCircle className="text-green-500 text-xl sm:text-4xl mb-1 sm:mb-2" />
           <h2 className="text-base sm:text-2xl font-bold text-gray-800 text-center">Article Verified!</h2>

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import ArticleCard from './components/ArticleCard';
 import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaCoins, FaChevronDown, FaCheckCircle } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
-import { useNews, categories } from './lib/serverNewsFetcher';
+import { categories } from './lib/serverNewsFetcher';
+import { useNews } from './lib/useNews';
 
 export default function Home() {
   const { featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
@@ -19,9 +20,8 @@ export default function Home() {
   const toggleVerifiedFilter = () => {
     setShowVerifiedOnly(!showVerifiedOnly);
   };
-
   const displayedArticles = showVerifiedOnly
-    ? filteredArticles.filter(article => article.verifiedBy)
+    ? filteredArticles.filter(article => article.verifiedBy != null)
     : filteredArticles;
 
   return (
@@ -84,12 +84,18 @@ export default function Home() {
             Featured Bytes
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredArticles.map((article, index) => (
-              <ArticleCard key={index} {...article} featured={true} />
+            {featuredArticles.map((article) => (
+              <ArticleCard
+                key={article.id}
+                {...article}
+                featured={true}
+                slug={article.id}
+                icon={categories[article.category as keyof typeof categories]}
+                verifiedBy={article.verifiedBy || undefined}
+              />
             ))}
           </div>
         </section>
-        
         <section className="mb-16">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-800 flex items-center">
@@ -120,10 +126,13 @@ export default function Home() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {displayedArticles.map((article, index) => (
+            {displayedArticles.map((article) => (
               <ArticleCard 
-                key={index} 
+                key={article.id}
                 {...article}
+                slug={article.id}
+                icon={categories[article.category as keyof typeof categories]}
+                verifiedBy={article.verifiedBy || undefined}
               />
             ))}
           </div>

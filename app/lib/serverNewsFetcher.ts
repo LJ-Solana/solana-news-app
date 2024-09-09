@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { ArticleCardProps } from '../components/ArticleCard';
 import { supabase } from './supabaseClient';
@@ -22,38 +21,7 @@ interface ArticleWithId extends NewsArticle {
   id: string;
 }
 
-export function useNews() {
-  const [articles, setArticles] = useState<ArticleCardProps[]>([]);
-  const [featuredArticles, setFeaturedArticles] = useState<ArticleCardProps[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<ArticleCardProps[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchNews() {
-      const newsData = await getNews();
-      setArticles(newsData);
-      setFeaturedArticles(newsData.slice(0, 3));
-    }
-    fetchNews();
-  }, []);
-
-  useEffect(() => {
-    const featuredIds = new Set(featuredArticles.map(article => article.id));
-    setFilteredArticles(
-      selectedCategory
-        ? articles.filter(article => article.category === selectedCategory)
-        : articles.filter(article => !featuredIds.has(article.id))
-    );
-  }, [articles, selectedCategory, featuredArticles]);
-
-  return {
-    articles,
-    featuredArticles,
-    filteredArticles,
-    selectedCategory,
-    setSelectedCategory
-  };
-}
+// Remove the useNews function as it uses React hooks
 
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
   const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;

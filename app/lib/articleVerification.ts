@@ -1,106 +1,154 @@
 import { supabase } from './supabaseClient';
-import { PublicKey } from '@solana/web3.js';
-import * as ed25519 from '@noble/ed25519';
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
+import { v4 as uuidv4 } from 'uuid';
 
 // Set up the required cryptographic function
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
-export async function handleVerifyArticle(slug: string, verifierPubkey: string, signature: string, sourceData: string): Promise<{ success: boolean; message: string }> {
+export async function handleVerifyArticle(
+  id: string,
+  slug: string,
+  title: string,
+  description: string,
+  author: string,
+  category: string,
+  publishedAt: string,
+  verifierPubkey: string,
+  signature: string,
+  sourceData: string
+): Promise<{ success: boolean; message: string }> {
   try {
-    // Verify the Solana signature
-    const message = `Verify article: ${slug}\nSource: ${sourceData}`;
-    const encodedMessage = new TextEncoder().encode(message);
-    const publicKey = new PublicKey(verifierPubkey);
-
-    const isValid = await ed25519.verify(
-      Buffer.from(signature, 'base64'),
-      encodedMessage,
-      publicKey.toBytes()
-    );
-
-    if (!isValid) {
-      console.log(`Invalid signature for article: ${slug}`);
-      return { success: false, message: 'Invalid signature' };
-    }
-
-    // Check if the verifier has already verified 5 articles today
-    const today = new Date().toISOString().split('T')[0];
-    const { data: verifications, error: verificationError } = await supabase
+    // Check if the article exists
+    const { data: existingArticle, error: fetchError } = await supabase
       .from('articles')
-      .select('*')
-      .eq('verifier', verifierPubkey)
-      .gte('created_at', today);
-
-    if (verificationError) {
-      console.log(`Error fetching verifications: ${verifierPubkey}`, verificationError);
-      return { success: false, message: 'Error checking verification limit' };
-    }
-
-    if (verifications && verifications.length >= 100) {
-      console.log(`Verifier ${verifierPubkey} has reached the daily limit`);
-      return { success: false, message: 'Daily verification limit reached' };
-    }
-    
-    // Update the article as verified, or insert if it doesn't exist
-    const { error: articleError } = await supabase
-      .from('articles')
-      .upsert({ 
-        slug,
-        verified: true, 
-        verifier: verifierPubkey, 
-        signature,
-        source_data: sourceData,
-        created_at: new Date().toISOString()
-      }, { 
-        onConflict: 'slug'
-      });
-
-    if (articleError) {
-      console.log(`Error updating article: ${slug}`, articleError);
-      return { success: false, message: 'Error updating article in database' };
-    }
-
-    // Check if the verifier already exists
-    const { data: existingVerifier, error: fetchError } = await supabase
-      .from('verifiers')
-      .select('*')
-      .eq('pubkey', verifierPubkey)
+      .select('id')
+      .eq('id', id)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.log(`Error fetching verifier: ${verifierPubkey}`, fetchError);
-      // Handle the error as needed, but don't return here
+      console.error('Error fetching article:', fetchError);
+      return { success: false, message: 'Error fetching article' };
     }
 
-    if (existingVerifier) {
-      // If the verifier exists, increment their verified_count
-      const { error: updateError } = await supabase
-        .from('verifiers')
-        .update({ verified_count: existingVerifier.verified_count + 1 })
-        .eq('pubkey', verifierPubkey);
+    let result;
 
-      if (updateError) {
-        console.log(`Error updating verifier: ${verifierPubkey}`, updateError);
-        return { success: false, message: 'Error updating verifier in database' };
-      }
+    if (!existingArticle) {
+      // Article doesn't exist, so we'll add it
+      result = await supabase
+        .from('articles')
+        .insert({
+          id,
+          slug,
+          title,
+          description,
+          author,
+          category,
+          publishedAt,
+          verified: true,
+          verifier: verifierPubkey,
+          signature,
+          source_data: sourceData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
     } else {
-      // If the verifier doesn't exist, insert a new record
-      const { error: insertError } = await supabase
-        .from('verifiers')
-        .insert({ pubkey: verifierPubkey, verified_count: 1 });
+      // Article exists, so we'll update it
+      result = await supabase
+        .from('articles')
+        .update({
+          verified: true,
+          verifier: verifierPubkey,
+          signature,
+          source_data: sourceData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+    }
+
+    if (result.error) throw result.error;
+
+    return { success: true, message: existingArticle ? 'Article verified successfully' : 'Article added and verified successfully' };
+  } catch (error) {
+    console.error('Error in handleVerifyArticle:', error);
+    return { success: false, message: 'An error occurred during verification' };
+  }
+}
+
+export async function verifyArticle(
+  articleSlug: string,
+  walletAddress: string,
+  signature: string,
+  articleData: { title: string; content: string; sourceUrl: string }
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Verify the signature
+    const message = `Verify article: ${articleSlug}\nSource: ${articleData.sourceUrl}`;
+    const encodedMessage = new TextEncoder().encode(message);
+    const signatureUint8Array = ed.etc.hexToBytes(signature);
+    const publicKeyUint8Array = ed.etc.hexToBytes(walletAddress);
+
+    const isSignatureValid = await ed.verify(signatureUint8Array, encodedMessage, publicKeyUint8Array);
+    if (!isSignatureValid) {
+      return { success: false, message: 'Invalid signature' };
+    }
+
+    // Fetch the article first to check if it exists
+    const { data: existingArticle, error: fetchError } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('slug', articleSlug)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching article:', fetchError);
+      return { success: false, message: 'Error fetching article from database' };
+    }
+
+    let articleId: string;
+
+    if (!existingArticle) {
+      // Article doesn't exist, so create it
+      const { data: newArticle, error: insertError } = await supabase
+        .from('articles')
+        .insert({
+          id: uuidv4(),
+          slug: articleSlug,
+          title: articleData.title,
+          content: articleData.content,
+          source_url: articleData.sourceUrl,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
 
       if (insertError) {
-        console.log(`Error inserting new verifier: ${verifierPubkey}`, insertError);
-        return { success: false, message: 'Error inserting new verifier in database' };
+        console.error('Error inserting new article:', insertError);
+        return { success: false, message: 'Error creating new article in database' };
       }
+
+      articleId = newArticle!.id;
+    } else {
+      articleId = existingArticle.id;
     }
 
-    console.log(`Article ${slug} successfully verified by ${verifierPubkey}`);
-    return { success: true, message: 'Article successfully verified' };
+    // Update the article with verification details
+    const { error: updateError } = await supabase
+      .from('articles')
+      .update({
+        verified_by: walletAddress,
+        verified_at: new Date().toISOString(),
+      })
+      .eq('id', articleId);
+
+    if (updateError) {
+      console.error('Error updating article:', articleId, updateError);
+      return { success: false, message: 'Error updating article in database' };
+    }
+
+    return { success: true, message: 'Article verified successfully' };
   } catch (error) {
-    console.log('Error in handleVerifyArticle:', error);
+    console.error('Error in verifyArticle:', error);
     return { success: false, message: 'An unexpected error occurred' };
   }
 }

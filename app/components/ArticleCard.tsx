@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 
 export interface ArticleCardProps {
   id: string;
-  slug: string;
+  slug: string;  // Add this line
   title: string;
   description: string;
   author: string;
@@ -26,7 +26,19 @@ export interface ArticleCardProps {
   summary?: string;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ id, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false }) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({ 
+  id, 
+  slug,  // Add this line
+  title, 
+  description, 
+  author, 
+  publishedAt, 
+  source, 
+  category, 
+  icon, 
+  urlToImage, 
+  featured = false 
+}) => {
   const [isVerified, setIsVerified] = useState(false);
   const [verifier, setVerifier] = useState<string | undefined>(undefined);
   const [signature, setSignature] = useState<string | null>(null);
@@ -35,70 +47,82 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ id, title, description, autho
   const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
 
-  useEffect(() => {
-    async function fetchVerificationStatus() {
+  const fetchVerificationStatus = async () => {
+    try {
       const { data, error } = await supabase
         .from('articles')
         .select('verified, verifier, signature')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
 
-      if (error) {
-        console.error('Error fetching verification status:', error);
-      } else if (data) {
-        setIsVerified(data.verified);
-        setVerifier(data.verifier);
-        setSignature(data.signature);
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setIsVerified(data[0].verified);
+        setVerifier(data[0].verifier);
+        setSignature(data[0].signature);
+      } else {
+        console.log('No verification data found for this article');
+        setIsVerified(false);
+        setVerifier(undefined);
+        setSignature(null);
       }
+    } catch (error) {
+      console.error('Error fetching verification status:', error);
     }
+  };
 
+  useEffect(() => {
     fetchVerificationStatus();
   }, [id]);
 
   const verifyArticle = async (sourceData: string) => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
       console.log('Wallet not connected or missing required properties');
-      console.log('Please connect your wallet first');
       return;
     }
 
     setIsVerifying(true);
 
     try {
-      console.log(`Attempting to verify article with id: ${id}`);
-      const message = new TextEncoder().encode(`Verify article: ${id}\nSource: ${sourceData}`);
-      console.log('Encoded message:', message);
+      const message = `Verify article: ${id}\nSource: ${sourceData}`;
+      console.log('Message to sign:', message);
+      const encodedMessage = new TextEncoder().encode(message);
       
-      const signatureBytes = await wallet.signMessage(message);
-      console.log('Signature obtained:', signatureBytes);
+      const signatureBytes = await wallet.signMessage(encodedMessage);
+      const base64Signature = Buffer.from(signatureBytes).toString('base64');
       
       const walletAddress = wallet.publicKey.toBase58();
-      console.log('Wallet address:', walletAddress);
-      
-      const base64Signature = Buffer.from(signatureBytes).toString('base64');
-      console.log('Base64 signature:', base64Signature);
 
-      const result = await handleVerifyArticle(id, walletAddress, base64Signature, sourceData);
-      console.log('Verification result:', result);
+      console.log('Encoded Message:', encodedMessage);
+      console.log('Signature Bytes:', signatureBytes);
+      console.log('Base64 Signature:', base64Signature);
+      console.log('Wallet Address:', walletAddress);
+
+      const result = await handleVerifyArticle(
+        id,
+        slug,  // Now this is defined
+        title,
+        description,
+        author,
+        category,
+        publishedAt,
+        walletAddress,
+        base64Signature,
+        sourceData
+      );
 
       if (result.success) {
         setIsVerified(true);
         setVerifier(walletAddress);
         setSignature(base64Signature);
-        console.log(`Article ${id} verified by ${walletAddress}`);
-        console.log(result.message);
         setShowModal(true);
       } else {
         console.log('Verification failed:', result.message);
-        console.log(`Verification failed: ${result.message}`);
+        // Optionally, show an error message to the user
       }
     } catch (error) {
-      console.log('Error verifying article:', error);
-      if (error instanceof Error) {
-        console.log('Error message:', error.message);
-        console.log('Error stack:', error.stack);
-      }
-      console.log('An unexpected error occurred while verifying the article. Please try again.');
+      console.error('Error verifying article:', error);
+      // Optionally, show an error message to the user
     } finally {
       setIsVerifying(false);
     }
@@ -113,6 +137,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ id, title, description, autho
               src={urlToImage || '/placeholder-image.jpg'}
               alt={title}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ objectFit: 'cover' }}
             />
           </div>
