@@ -21,8 +21,6 @@ interface ArticleWithId extends NewsArticle {
   id: string;
 }
 
-// Remove the useNews function as it uses React hooks
-
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
   const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
@@ -32,9 +30,37 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
         'User-Agent': 'ByteNews/1.0',
       },
     });
-    return response.data.articles.filter((article: NewsArticle) => 
+    const articles = response.data.articles.filter((article: NewsArticle) => 
       article.urlToImage && article.author
     );
+
+    const articlesToInsert = articles.map(article => ({
+      id: uuidv4(),
+      title: article.title,
+      description: article.description,
+      author: article.author,
+      urlToImage: article.urlToImage || null,
+      publishedAt: article.publishedAt,
+      source: JSON.stringify(article.source), 
+      verified: false,
+      slug: slugify(article.title),
+      category: categorizeArticle(article.title, article.description || '')
+    }));
+
+    const { error } = await supabase
+      .from('articles')
+      .upsert(articlesToInsert, { 
+        onConflict: 'slug',
+        ignoreDuplicates: true
+      });
+
+    if (error) {
+      console.error('Error inserting/updating articles:', error);
+    } else {
+      console.log('Articles inserted/updated successfully');
+    }
+
+    return articles;
   } catch (error) {
     console.error('Error fetching news:', error);
     return [];
@@ -45,26 +71,37 @@ export async function getNews(): Promise<ArticleCardProps[]> {
   try {
     const newsArticles = await fetchNewsFromAPI();
     
-    const articlesWithIds: ArticleWithId[] = newsArticles.map((article: NewsArticle) => ({
-      ...article,
-      id: uuidv4(), 
+    const uniqueArticles = new Map<string, ArticleWithId>();
+
+    newsArticles.forEach((article: NewsArticle) => {
+      const slug = slugify(article.title);
+      if (!uniqueArticles.has(slug)) {
+        uniqueArticles.set(slug, {
+          ...article,
+          id: uuidv4(),
+        });
+      }
+    });
+
+    const articlesToInsert = Array.from(uniqueArticles.values()).map((article) => ({
+      id: article.id,
+      title: article.title,
+      description: article.description || '',
+      author: article.author,
+      urlToImage: article.urlToImage,
+      publishedAt: article.publishedAt,
+      source: article.source,
+      verified: false,
+      slug: slugify(article.title),
+      category: categorizeArticle(article.title, article.description || ''),
     }));
 
-    // Insert all articles into Supabase
     const { error: insertError } = await supabase
       .from('articles')
-      .upsert(articlesWithIds.map((article: ArticleWithId) => ({
-        id: article.id, 
-        title: article.title,
-        description: article.description || '',
-        author: article.author,
-        urlToImage: article.urlToImage,
-        publishedAt: article.publishedAt,
-        source: article.source.name,
-        verified: false,
-        slug: slugify(article.title),
-        category: categorizeArticle(article.title, article.description || ''),
-      })), { onConflict: 'id' });
+      .upsert(articlesToInsert, { 
+        onConflict: 'slug',
+        ignoreDuplicates: true
+      });
 
     if (insertError) {
       console.error("Error inserting/updating articles:", insertError);
@@ -74,17 +111,21 @@ export async function getNews(): Promise<ArticleCardProps[]> {
     const { data: verifiedArticles, error: verifiedError } = await supabase
       .from('articles')
       .select('id, verifier')
-      .in('id', articlesWithIds.map((a: ArticleWithId) => a.id));
+      .in('id', articlesToInsert.map((a) => a.id));
 
     if (verifiedError) {
       console.error("Error fetching verified articles:", verifiedError);
     }
     const verifiedMap = new Map(verifiedArticles?.map(a => [a.id, a.verifier]) || []);
-    const processedArticles: ArticleCardProps[] = articlesWithIds.map((article: ArticleWithId) => {
+    const processedArticles: ArticleCardProps[] = articlesToInsert.map((article) => {
       const category = categorizeArticle(article.title, article.description || '');
       const slug = slugify(article.title);
       return {
-        ...article,
+        id: article.id,
+        title: article.title,
+        author: article.author,
+        publishedAt: article.publishedAt,
+        source:article.source,
         description: article.description || '',
         slug,
         verifiedBy: verifiedMap.get(article.id) || null,

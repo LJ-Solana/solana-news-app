@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
@@ -10,13 +10,14 @@ import { supabase } from '../lib/supabaseClient';
 
 export interface ArticleCardProps {
   id: string;
-  slug: string;  // Add this line
+  slug: string;
   title: string;
   description: string;
   author: string;
   publishedAt: string;
   source: {
     name: string;
+    [key: string]: string | number; 
   };
   category: string;
   icon: string;
@@ -28,7 +29,7 @@ export interface ArticleCardProps {
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ 
   id, 
-  slug,  // Add this line
+  slug,
   title, 
   description, 
   author, 
@@ -37,7 +38,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   category, 
   icon, 
   urlToImage, 
-  featured = false 
+  featured = false,
 }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [verifier, setVerifier] = useState<string | undefined>(undefined);
@@ -46,34 +47,40 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [showSourceDataModal, setShowSourceDataModal] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
+  const [imageError, setImageError] = useState(false);
 
-  const fetchVerificationStatus = async () => {
+  const fetchVerificationStatus = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('articles')
         .select('verified, verifier, signature')
-        .eq('id', id);
+        .eq('slug', slug)
+        .eq('verified', true)
+        .maybeSingle();
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        setIsVerified(data[0].verified);
-        setVerifier(data[0].verifier);
-        setSignature(data[0].signature);
+      if (data) {
+        setIsVerified(true);
+        setVerifier(data.verifier);
+        setSignature(data.signature);
       } else {
-        console.log('No verification data found for this article');
+        console.log('Article not verified or not found');
         setIsVerified(false);
         setVerifier(undefined);
         setSignature(null);
       }
     } catch (error) {
       console.error('Error fetching verification status:', error);
+      setIsVerified(false);
+      setVerifier(undefined);
+      setSignature(null);
     }
-  };
+  }, [slug]);
 
   useEffect(() => {
     fetchVerificationStatus();
-  }, [id]);
+  }, [fetchVerificationStatus]);
 
   const verifyArticle = async (sourceData: string) => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
@@ -100,7 +107,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
       const result = await handleVerifyArticle(
         id,
-        slug,  // Now this is defined
+        slug,
         title,
         description,
         author,
@@ -112,9 +119,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       );
 
       if (result.success) {
-        setIsVerified(true);
-        setVerifier(walletAddress);
-        setSignature(base64Signature);
+        await fetchVerificationStatus();
         setShowModal(true);
       } else {
         console.log('Verification failed:', result.message);
@@ -134,11 +139,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         <Link href={`/article/${id}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
-              src={urlToImage || '/placeholder-image.jpg'}
+              src={imageError ? '/placeholder-image.jpg' : (urlToImage || '/placeholder-image.jpg')}
               alt={title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ objectFit: 'cover' }}
+              onError={() => setImageError(true)}
             />
           </div>
           <div className="p-4 space-y-3 flex-grow">

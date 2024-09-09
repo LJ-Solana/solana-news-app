@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Set up the required cryptographic function
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
-export async function handleVerifyArticle(
+export const handleVerifyArticle = async (
   id: string,
   slug: string,
   title: string,
@@ -14,66 +14,69 @@ export async function handleVerifyArticle(
   author: string,
   category: string,
   publishedAt: string,
-  verifierPubkey: string,
+  walletAddress: string,
   signature: string,
   sourceData: string
-): Promise<{ success: boolean; message: string }> {
+) => {
   try {
-    // Check if the article exists
+    // Check if the article already exists
     const { data: existingArticle, error: fetchError } = await supabase
       .from('articles')
-      .select('id')
-      .eq('id', id)
+      .select('*')
+      .eq('slug', slug)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching article:', fetchError);
-      return { success: false, message: 'Error fetching article' };
+      throw fetchError;
     }
 
-    let result;
-
-    if (!existingArticle) {
-      // Article doesn't exist, so we'll add it
-      result = await supabase
-        .from('articles')
-        .insert({
-          id,
-          slug,
-          title,
-          description,
-          author,
-          category,
-          publishedAt,
-          verified: true,
-          verifier: verifierPubkey,
-          signature,
-          source_data: sourceData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-    } else {
-      // Article exists, so we'll update it
-      result = await supabase
+    if (existingArticle) {
+      // Update the existing article
+      const { data, error } = await supabase
         .from('articles')
         .update({
           verified: true,
-          verifier: verifierPubkey,
-          signature,
+          verifier: walletAddress,
+          signature: signature,
           source_data: sourceData,
-          updated_at: new Date().toISOString()
+          // Update other fields as needed
         })
-        .eq('id', id);
+        .eq('slug', slug);
+
+      if (error) throw error;
+      
+      console.log('Article updated:', data);
+      return { success: true, message: 'Article verified and updated successfully' };
+    } else {
+      // Insert a new article if it doesn't exist
+      const { data, error } = await supabase
+        .from('articles')
+        .insert([
+          {
+            id,
+            slug,
+            title,
+            description,
+            author,
+            category,
+            published_at: publishedAt,
+            verified: true,
+            verifier: walletAddress,
+            signature: signature,
+            source_data: sourceData,
+          },
+        ]);
+
+      if (error) throw error;
+
+      console.log('New article inserted:', data);
+      return { success: true, message: 'New article verified and inserted successfully' };
     }
-
-    if (result.error) throw result.error;
-
-    return { success: true, message: existingArticle ? 'Article verified successfully' : 'Article added and verified successfully' };
   } catch (error) {
-    console.error('Error in handleVerifyArticle:', error);
-    return { success: false, message: 'An error occurred during verification' };
+    console.error('Error verifying article:', error);
+    return { success: false, message: 'Failed to verify article' };
   }
-}
+};
 
 export async function verifyArticle(
   articleSlug: string,
