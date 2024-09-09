@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { ArticleCardProps } from '../components/ArticleCard';
 import { supabase } from './supabaseClient';
+import slugify from 'slugify';
 
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 
@@ -15,6 +16,10 @@ interface NewsArticle {
   source: {
     name: string;
   };
+}
+
+interface ArticleWithId extends NewsArticle {
+  id: string;
 }
 
 export function useNews() {
@@ -33,11 +38,11 @@ export function useNews() {
   }, []);
 
   useEffect(() => {
-    const featuredSlugs = new Set(featuredArticles.map(article => article.slug));
+    const featuredIds = new Set(featuredArticles.map(article => article.id));
     setFilteredArticles(
       selectedCategory
         ? articles.filter(article => article.category === selectedCategory)
-        : articles.filter(article => !featuredSlugs.has(article.slug))
+        : articles.filter(article => !featuredIds.has(article.id))
     );
   }, [articles, selectedCategory, featuredArticles]);
 
@@ -50,11 +55,11 @@ export function useNews() {
   };
 }
 
-export async function fetchNewsFromAPI() {
+export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
   const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
-    const response = await axios.get(url, {
+    const response = await axios.get<{ articles: NewsArticle[] }>(url, {
       headers: {
         'User-Agent': 'ByteNews/1.0',
       },
@@ -68,37 +73,57 @@ export async function fetchNewsFromAPI() {
   }
 }
 
-export async function getNews() {
+export async function getNews(): Promise<ArticleCardProps[]> {
   try {
     const newsArticles = await fetchNewsFromAPI();
     
-    const articlesWithIds = newsArticles.map((article: NewsArticle) => {
-      const slug = article.title.toLowerCase().replace(/\s+/g, '-');
-      return {
-        ...article,
-        id: uuidv4(),
-        slug,
-      };
-    });
+    const articlesWithIds: ArticleWithId[] = newsArticles.map((article: NewsArticle) => ({
+      ...article,
+      id: uuidv4(), 
+    }));
 
-    const { data: verifiedArticles, error } = await supabase
+    // Insert all articles into Supabase
+    const { error: insertError } = await supabase
       .from('articles')
-      .select('slug, verifier')
-      .in('slug', articlesWithIds.map((a: { slug: string }) => a.slug));
+      .upsert(articlesWithIds.map((article: ArticleWithId) => ({
+        id: article.id, 
+        title: article.title,
+        description: article.description || '',
+        author: article.author,
+        urlToImage: article.urlToImage,
+        publishedAt: article.publishedAt,
+        source: article.source.name,
+        verified: false,
+        slug: slugify(article.title),
+        category: categorizeArticle(article.title, article.description || ''),
+      })), { onConflict: 'id' });
 
-    if (error) {
-      console.error("Error fetching verified articles:", error);
+    if (insertError) {
+      console.error("Error inserting/updating articles:", insertError);
     }
 
-    const verifiedMap = new Map(verifiedArticles?.map(a => [a.slug, a.verifier]) || []);
-    
-    const processedArticles = articlesWithIds.map((article: ArticleCardProps) => {
-      const category = categorizeArticle(article.title, article.description);
+    // Fetch verified articles
+    const { data: verifiedArticles, error: verifiedError } = await supabase
+      .from('articles')
+      .select('id, verifier')
+      .in('id', articlesWithIds.map((a: ArticleWithId) => a.id));
+
+    if (verifiedError) {
+      console.error("Error fetching verified articles:", verifiedError);
+    }
+    const verifiedMap = new Map(verifiedArticles?.map(a => [a.id, a.verifier]) || []);
+    const processedArticles: ArticleCardProps[] = articlesWithIds.map((article: ArticleWithId) => {
+      const category = categorizeArticle(article.title, article.description || '');
+      const slug = slugify(article.title);
       return {
         ...article,
-        verifiedBy: verifiedMap.get(article.slug) || undefined,
+        description: article.description || '',
+        slug,
+        verifiedBy: verifiedMap.get(article.id) || null,
         category,
         icon: categories[category as keyof typeof categories] || '📰',
+        summary: '',
+        urlToImage: article.urlToImage || null,
       };
     });
 
@@ -110,26 +135,31 @@ export async function getNews() {
 }
 
 export async function getArticleBySlug(slug: string): Promise<ArticleCardProps | null> {
-  const newsArticles = await fetchNewsFromAPI();
-  const article = newsArticles.find((a: NewsArticle) => a.title.toLowerCase().replace(/\s+/g, '-') === slug);
-  
-  if (!article) return null;
+  const { data: article, error } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('slug', slug)
+    .single();
 
-  const category = categorizeArticle(article.title, article.description || '');
+  if (error || !article) {
+    console.error("Error fetching article:", error);
+    return null;
+  }
+
   const summary = await generateSummary(article.description || article.title);
 
   return {
-    id: slug,
-    slug,
+    id: article.id,
     title: article.title,
     description: article.description || '',
     author: article.author,
+    slug: article.slug,
     publishedAt: article.publishedAt,
-    source: article.source,
-    category,
-    icon: categories[category as keyof typeof categories] || '📰',
-    urlToImage: article.urlToImage,
-    verifiedBy: undefined,
+    source: { name: article.source },
+    category: article.category,
+    icon: categories[article.category as keyof typeof categories] || '📰',
+    urlToImage: article.urlToImage || null,
+    verifiedBy: article.verifier,
     summary,
   };
 }
@@ -156,17 +186,6 @@ export function categorizeArticle(title: string, description: string): string {
   return 'Other';
 }
 
-export const categories = {
-  "Technology": "🖥️",
-  "Science": "🔬",
-  "Health": "🩺",
-  "Business": "💼",
-  "Politics": "🏛️",
-  "Environment": "🌿",
-  "Space": "🚀",
-  "Blockchain": "⛓️",
-};
-
 async function generateSummary(content: string): Promise<string> {
   try {
     const response = await fetch('/api/generate-summary', {
@@ -188,3 +207,14 @@ async function generateSummary(content: string): Promise<string> {
     return "An error occurred while generating the summary.";
   }
 }
+
+export const categories = {
+  "Technology": "🖥️",
+  "Science": "🔬",
+  "Health": "🩺",
+  "Business": "💼",
+  "Politics": "🏛️",
+  "Environment": "🌿",
+  "Space": "🚀",
+  "Blockchain": "⛓️",
+};
