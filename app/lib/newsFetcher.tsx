@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { ArticleCardProps } from '../components/ArticleCard';
-import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
-const ANTHROPIC_API_KEY = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
 const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
 
 interface NewsArticle {
@@ -14,13 +12,17 @@ interface NewsArticle {
   description?: string;
   author: string;
   urlToImage?: string;
+  publishedAt: string;
+  source: {
+    name: string;
+  };
 }
 
 async function fetchNewsFromAPI() {
   const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -45,12 +47,12 @@ async function getNews() {
   try {
     const newsArticles = await fetchNewsFromAPI();
     
-    const articlesWithIds = newsArticles.map((article: ArticleCardProps) => {
-      const id = uuidv4();
+    const articlesWithIds = newsArticles.map((article: NewsArticle) => {
+      const slug = article.title.toLowerCase().replace(/\s+/g, '-');
       return {
         ...article,
-        id,
-        slug: id, // Use the same UUID for both id and slug
+        id: uuidv4(),
+        slug,
       };
     });
 
@@ -67,30 +69,23 @@ async function getNews() {
     // Create a map of verified articles for quick lookup
     const verifiedMap = new Map(verifiedArticles?.map(a => [a.slug, a.verifier]) || []);
     
-    // Add verification status to each article
-    const articlesWithVerification = articlesWithIds.map((article: ArticleCardProps) => {
-      const slug = article.slug;
+    // Add verification status and category to each article
+    const processedArticles = articlesWithIds.map((article: ArticleCardProps) => {
+      const category = categorizeArticle(article.title, article.description);
       return {
         ...article,
-        slug,
-        verifiedBy: verifiedMap.get(slug) || undefined
+        verifiedBy: verifiedMap.get(article.slug) || undefined,
+        category,
+        icon: categories[category as keyof typeof categories] || '📰',
       };
     });
 
-    // Generate summaries for each article
-    const articlesWithSummaries = await Promise.all(
-        articlesWithVerification.map(async (article: ArticleCardProps) => {
-          const summary = await generateSummary(article.description);
-          return { ...article, summary };
-        })
-      );
-  
-      return articlesWithSummaries;
-    } catch (error) {
-      console.error("Failed to fetch news:", error);
-      return []; 
-    }
+    return processedArticles;
+  } catch (error) {
+    console.error("Failed to fetch news:", error);
+    return []; 
   }
+}
 
 async function generateSummary(content: string): Promise<string> {
   try {
@@ -114,7 +109,7 @@ async function generateSummary(content: string): Promise<string> {
   }
 }
 
-function categorizeArticle(title: string, description: string): string {
+export function categorizeArticle(title: string, description: string): string {
     const text = (title + ' ' + description).toLowerCase();
     const categoryPatterns: Record<string, string[]> = {
       Technology: ['tech', 'software', 'hardware', 'ai', 'robot', 'computer', 'internet', 'cyber', 'digital', 'innovation', 'gadget', 'programming', 'algorithm', 'data'],
@@ -134,9 +129,8 @@ function categorizeArticle(title: string, description: string): string {
     }
   
     return 'Other';
-  }
+}
 
-// Updated categories and emojis
 export const categories = {
   "Technology": "🖥️",
   "Science": "🔬",
@@ -157,51 +151,51 @@ export function useNews() {
     useEffect(() => {
       async function fetchNews() {
         const newsData = await getNews();
-        const processedArticles = newsData.map((article: ArticleCardProps) => ({
-          ...article,
-          category: categorizeArticle(article.title, article.description),
-          icon: categories[categorizeArticle(article.title, article.description) as keyof typeof categories] || '📰',
-        }));
-        setArticles(processedArticles);
-        setFeaturedArticles(processedArticles.slice(0, 3));
+        setArticles(newsData);
+        setFeaturedArticles(newsData.slice(0, 3));
       }
       fetchNews();
     }, []);
 
-  useEffect(() => {
-    const featuredSlugs = new Set(featuredArticles.map(article => article.slug));
-    setFilteredArticles(
-      selectedCategory
-        ? articles.filter(article => article.category === selectedCategory)
-        : articles.filter(article => !featuredSlugs.has(article.slug))
-    );
-  }, [articles, selectedCategory, featuredArticles]);
+    useEffect(() => {
+      const featuredSlugs = new Set(featuredArticles.map(article => article.slug));
+      setFilteredArticles(
+        selectedCategory
+          ? articles.filter(article => article.category === selectedCategory)
+          : articles.filter(article => !featuredSlugs.has(article.slug))
+      );
+    }, [articles, selectedCategory, featuredArticles]);
 
-  return {
-    articles,
-    featuredArticles,
-    filteredArticles,
-    selectedCategory,
-    setSelectedCategory
-  };
+    return {
+      articles,
+      featuredArticles,
+      filteredArticles,
+      selectedCategory,
+      setSelectedCategory
+    };
 }
 
-// Add this new function
 export async function getArticleBySlug(slug: string): Promise<ArticleCardProps | null> {
   const newsArticles = await fetchNewsFromAPI();
-  const article = newsArticles.find(a => a.slug === slug);
+  const article = newsArticles.find((a: NewsArticle) => a.title.toLowerCase().replace(/\s+/g, '-') === slug);
   
   if (!article) return null;
 
-  const category = categorizeArticle(article.title, article.description);
+  const category = categorizeArticle(article.title, article.description || '');
   const summary = await generateSummary(article.description || article.title);
 
   return {
-    ...article,
     id: slug,
     slug,
+    title: article.title,
+    description: article.description || '',
+    author: article.author,
+    publishedAt: article.publishedAt,
+    source: article.source,
     category,
     icon: categories[category as keyof typeof categories] || '📰',
+    urlToImage: article.urlToImage,
+    verifiedBy: undefined, // You may need to implement verification logic
     summary,
   };
 }

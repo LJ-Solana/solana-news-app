@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { handleVerifyArticle } from '../lib/articleVerification';
 import VerificationModal from '../components/VerificationModal';
+import SourceDataModal from '../components/SourceDataModal';
+import { supabase } from '../lib/supabaseClient';
 
 export interface ArticleCardProps {
   id: string;
@@ -24,15 +26,36 @@ export interface ArticleCardProps {
   summary?: string;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false, verifiedBy }) => {
-  const [isVerified, setIsVerified] = useState(!!verifiedBy);
-  const [verifier, setVerifier] = useState(verifiedBy);
-  const [isVerifying, setIsVerifying] = useState(false);
+const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false }) => {
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifier, setVerifier] = useState<string | undefined>(undefined);
   const [signature, setSignature] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showSourceDataModal, setShowSourceDataModal] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
 
-  const verifyArticle = async () => {
+  useEffect(() => {
+    async function fetchVerificationStatus() {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('verified, verifier, signature')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        console.error('Error fetching verification status:', error);
+      } else if (data) {
+        setIsVerified(data.verified);
+        setVerifier(data.verifier);
+        setSignature(data.signature);
+      }
+    }
+
+    fetchVerificationStatus();
+  }, [slug]);
+
+  const verifyArticle = async (sourceData: string) => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
       console.log('Wallet not connected or missing required properties');
       console.log('Please connect your wallet first');
@@ -43,7 +66,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
 
     try {
       console.log(`Attempting to verify article with slug: ${slug}`);
-      const message = new TextEncoder().encode(`Verify article: ${slug}`);
+      const message = new TextEncoder().encode(`Verify article: ${slug}\nSource: ${sourceData}`);
       console.log('Encoded message:', message);
       
       const signatureBytes = await wallet.signMessage(message);
@@ -55,7 +78,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
       console.log('Base64 signature:', base64Signature);
 
-      const result = await handleVerifyArticle(slug, walletAddress, base64Signature);
+      const result = await handleVerifyArticle(slug, walletAddress, base64Signature, sourceData);
       console.log('Verification result:', result);
 
       if (result.success) {
@@ -106,7 +129,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
             </div>
             <div className="text-xs flex justify-between mt-2">
               <div className="flex flex-col">
-                {isVerified || verifier ? (
+                {isVerified ? (
                   <span className="text-green-600 flex items-center">
                     <FaCheckCircle className="mr-1" /> 
                     Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
@@ -118,9 +141,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
                 )}
               </div>
               <div className="flex flex-col text-right">
-                {isVerified || verifier ? (
+                {isVerified && signature ? (
                   <span className="text-pink-600">
-                    Signature: {signature ? `${signature.slice(0, 4)}...${signature.slice(-4)}` : 'N/A'}
+                    Signature: {`${signature.slice(0, 4)}...${signature.slice(-4)}`}
                   </span>
                 ) : null}
               </div>
@@ -129,7 +152,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
         </Link>
         <div className="px-4 pb-4 mt-auto flex space-x-2">
           <button
-            onClick={verifyArticle}
+            onClick={() => setShowSourceDataModal(true)}
             className={`flex-1 py-2 rounded-md text-white font-semibold transition duration-300 ${
               isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
             }`}
@@ -137,13 +160,22 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
           >
             {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
           </button>
-          <Link href={`/article/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, '-'))}`} className="flex-1">
-            <button className="w-full py-2 rounded-md text-white font-semibold transition duration-300 bg-green-500 hover:bg-green-600">
+          <Link href={`/article/${slug}`} className="flex-1">
+            <button className="w-full py-2 rounded-md text-white font-semibold transition duration-300 bg-purple-500 hover:bg-purple-600">
               Read Summary
             </button>
           </Link>
         </div>
       </div>
+      {showSourceDataModal && (
+        <SourceDataModal
+          isOpen={showSourceDataModal}
+          onClose={() => setShowSourceDataModal(false)}
+          onSubmit={verifyArticle}
+          articleTitle={title}
+          articleSlug={slug}
+        />
+      )}
       {showModal && (
         <VerificationModal
           isOpen={showModal}

@@ -2,8 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { getArticleData } from '../../lib/getArticleData';
+import { ArticleCardProps } from '../../components/ArticleCard';
 import { GenerateSummary } from './GenerateSummary';
+
+async function getArticleData(slug: string): Promise<ArticleCardProps | null> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/article/${slug}`);
+  if (!res.ok) return null;
+  return res.json();
+}
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   const article = await getArticleData(params.slug);
@@ -14,7 +20,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         <main className="container mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
           <p className="text-gray-800 leading-relaxed">
-            Sorry, the article you're looking for doesn't exist.
+            Sorry, the article youre looking for doesnt exist.
           </p>
           <Link href="/" className="text-blue-500 hover:underline mt-4 inline-block">
             Return to Home

@@ -1,5 +1,6 @@
-import { ArticleCardProps } from '../components/ArticleCard';
-import { categorizeArticle, categories } from './newsFetcher';
+import { NextResponse } from 'next/server';
+import { ArticleCardProps } from '../../components/ArticleCard';
+import { categorizeArticle, categories } from '../../lib/newsFetcher';
 
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 
@@ -12,7 +13,6 @@ async function fetchNewsFromAPI() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    
     return data.articles;
   } catch (error) {
     console.error('Error fetching news:', error);
@@ -20,25 +20,18 @@ async function fetchNewsFromAPI() {
   }
 }
 
-interface NewsArticle {
-  slug: string;
-  title: string;
-  description: string;
-  author: string;
-  publishedAt: string;
-  source: { name: string };
-  urlToImage: string;
-}
-
-export async function getArticleData(slug: string): Promise<ArticleCardProps | null> {
+export async function GET(request: Request, { params }: { params: { slug: string } }) {
+  const { slug } = params;
   const newsArticles = await fetchNewsFromAPI();
-  const article = newsArticles.find((a: NewsArticle) => a.slug === slug);
+  const article = newsArticles.find((a: any) => a.title.toLowerCase().replace(/\s+/g, '-') === slug);
   
-  if (!article) return null;
+  if (!article) {
+    return NextResponse.json({ error: 'Article not found' }, { status: 404 });
+  }
 
   const category = categorizeArticle(article.title, article.description);
 
-  return {
+  const articleData: ArticleCardProps = {
     id: slug,
     slug,
     title: article.title,
@@ -49,6 +42,8 @@ export async function getArticleData(slug: string): Promise<ArticleCardProps | n
     category,
     icon: categories[category as keyof typeof categories] || '📰',
     urlToImage: article.urlToImage,
-    verifiedBy: undefined, // You may need to implement verification logic
+    verifiedBy: undefined, 
   };
+
+  return NextResponse.json(articleData);
 }

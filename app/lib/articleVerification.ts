@@ -7,10 +7,10 @@ import { sha512 } from '@noble/hashes/sha512';
 // Set up the required cryptographic function
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
-export async function handleVerifyArticle(slug: string, verifierPubkey: string, signature: string): Promise<{ success: boolean; message: string }> {
+export async function handleVerifyArticle(slug: string, verifierPubkey: string, signature: string, sourceData: string): Promise<{ success: boolean; message: string }> {
   try {
     // Verify the Solana signature
-    const message = `Verify article: ${slug}`;
+    const message = `Verify article: ${slug}\nSource: ${sourceData}`;
     const encodedMessage = new TextEncoder().encode(message);
     const publicKey = new PublicKey(verifierPubkey);
 
@@ -38,7 +38,7 @@ export async function handleVerifyArticle(slug: string, verifierPubkey: string, 
       return { success: false, message: 'Error checking verification limit' };
     }
 
-    if (verifications && verifications.length >= 5) {
+    if (verifications && verifications.length >= 100) {
       console.log(`Verifier ${verifierPubkey} has reached the daily limit`);
       return { success: false, message: 'Daily verification limit reached' };
     }
@@ -51,6 +51,7 @@ export async function handleVerifyArticle(slug: string, verifierPubkey: string, 
         verified: true, 
         verifier: verifierPubkey, 
         signature,
+        source_data: sourceData,
         created_at: new Date().toISOString()
       }, { 
         onConflict: 'slug'
