@@ -47,9 +47,10 @@ const LeaderboardPage: React.FC = () => {
           </Link>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 text-center flex-grow">
             <FaTrophy className="inline-block mr-4 text-yellow-500" />
-            Verifiers Leaderboard
+             Leaderboard
           </h1>
         </div>
+        <p className="text-center text-gray-600 mb-6">Top verifiers ranked by their contribution to content verification.</p>
         {isLoading ? (
           <p className="text-center text-gray-600">Loading verifiers...</p>
         ) : error ? (

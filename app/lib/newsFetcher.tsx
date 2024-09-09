@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { ArticleCardProps } from '../components/ArticleCard';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
 
@@ -18,25 +19,16 @@ interface NewsArticle {
   };
 }
 
-async function fetchNewsFromAPI() {
+export async function fetchNewsFromAPI() {
   const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    
-    // Filter out articles with [removed] in the title or description, with unknown authors, or without images
-    const filteredArticles = data.articles.filter((article: NewsArticle) => 
-      !article.title.includes('[removed]') && 
-      !article.description?.includes('[removed]') &&
-      article.author && article.author !== 'unknown' &&
-      article.urlToImage
-    );
-
-    return filteredArticles;
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'ByteNews/1.0',
+      },
+    });
+    return response.data.articles;
   } catch (error) {
     console.error('Error fetching news:', error);
     return [];
