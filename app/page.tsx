@@ -136,16 +136,7 @@ export default function Home() {
           <div className="flex flex-wrap justify-between">
             <div className="w-full md:w-1/3 mb-8 md:mb-0">
               <h3 className="text-2xl font-bold mb-4">Gulfstream Media</h3>
-              <p className="text-gray-400">Delivering byte-sized tech and science updates, every day.</p>
-            </div>
-            <div className="w-full md:w-1/3 mb-8 md:mb-0">
-              <h3 className="text-2xl font-bold mb-4">Quick Links</h3>
-              <ul className="text-gray-400 space-y-2">
-                <li><Link href="/" className="hover:text-white transition duration-300">Home</Link></li>
-                <li><Link href="/categories" className="hover:text-white transition duration-300">Categories</Link></li>
-                <li><Link href="/about" className="hover:text-white transition duration-300">About Us</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition duration-300">Contact</Link></li>
-              </ul>
+              <p className="text-gray-400">Delivering byte-sized tech and science updates.</p>
             </div>
             <div className="w-full md:w-1/3">
               <h3 className="text-2xl font-bold mb-4">Stay Connected</h3>
