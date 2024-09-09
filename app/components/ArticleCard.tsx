@@ -26,7 +26,7 @@ export interface ArticleCardProps {
   summary?: string;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false }) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({ id, title, description, author, publishedAt, source, category, icon, urlToImage, featured = false }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [verifier, setVerifier] = useState<string | undefined>(undefined);
   const [signature, setSignature] = useState<string | null>(null);
@@ -40,7 +40,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
       const { data, error } = await supabase
         .from('articles')
         .select('verified, verifier, signature')
-        .eq('slug', slug)
+        .eq('id', id)
         .single();
 
       if (error) {
@@ -53,7 +53,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
     }
 
     fetchVerificationStatus();
-  }, [slug]);
+  }, [id]);
 
   const verifyArticle = async (sourceData: string) => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
@@ -65,8 +65,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
     setIsVerifying(true);
 
     try {
-      console.log(`Attempting to verify article with slug: ${slug}`);
-      const message = new TextEncoder().encode(`Verify article: ${slug}\nSource: ${sourceData}`);
+      console.log(`Attempting to verify article with id: ${id}`);
+      const message = new TextEncoder().encode(`Verify article: ${id}\nSource: ${sourceData}`);
       console.log('Encoded message:', message);
       
       const signatureBytes = await wallet.signMessage(message);
@@ -78,14 +78,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
       console.log('Base64 signature:', base64Signature);
 
-      const result = await handleVerifyArticle(slug, walletAddress, base64Signature, sourceData);
+      const result = await handleVerifyArticle(id, walletAddress, base64Signature, sourceData);
       console.log('Verification result:', result);
 
       if (result.success) {
         setIsVerified(true);
         setVerifier(walletAddress);
         setSignature(base64Signature);
-        console.log(`Article ${slug} verified by ${walletAddress}`);
+        console.log(`Article ${id} verified by ${walletAddress}`);
         console.log(result.message);
         setShowModal(true);
       } else {
@@ -107,7 +107,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
   return (
     <>
       <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
-        <Link href={`/article/${slug}`} className="block flex-grow">
+        <Link href={`/article/${id}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
               src={urlToImage || '/placeholder-image.jpg'}
@@ -160,7 +160,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
           >
             {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
           </button>
-          <Link href={`/article/${slug}`} className="flex-1">
+          <Link href={`/article/${id}`} className="flex-1">
             <button className="w-full py-2 rounded-md text-white font-semibold transition duration-300 bg-purple-500 hover:bg-purple-600">
               Read Summary
             </button>
@@ -173,7 +173,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ slug, title, description, aut
           onClose={() => setShowSourceDataModal(false)}
           onSubmit={verifyArticle}
           articleTitle={title}
-          articleSlug={slug}
+          articleSlug={id}
         />
       )}
       {showModal && (

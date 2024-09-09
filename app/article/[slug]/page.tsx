@@ -5,8 +5,13 @@ import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa
 import { ArticleCardProps } from '../../components/ArticleCard';
 import { GenerateSummary } from './GenerateSummary';
 
-async function getArticleData(slug: string): Promise<ArticleCardProps | null> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/article/${slug}`);
+// Update the ArticleCardProps interface
+interface ExtendedArticleProps extends ArticleCardProps {
+  content: string;
+}
+
+async function getArticleData(id: string): Promise<ExtendedArticleProps | null> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/article/${id}`, { cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
 }
@@ -20,7 +25,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         <main className="container mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
           <p className="text-gray-800 leading-relaxed">
-            Sorry, the article youre looking for doesnt exist.
+            Sorry, the article you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link href="/" className="text-blue-500 hover:underline mt-4 inline-block">
             Return to Home
@@ -63,10 +68,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               </span>
             )}
           </div>
-          <h2 className="text-2xl font-semibold mb-2">AI Summary</h2>
-          <GenerateSummary content={article.description} />
-          <h2 className="text-2xl font-semibold mb-2">Original Article</h2>
-          <p className="text-gray-800 leading-relaxed">{article.description}</p>
+          <h2 className="text-2xl font-semibold mb-2">Full Article</h2>
+          <div className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <h2 className="text-2xl font-semibold mt-6 mb-2">AI Summary</h2>
+          <GenerateSummary content={article.content} />
           <div className="mt-6">
             <Link href="/" className="inline-block text-blue-500 hover:underline">
               Back to Home
