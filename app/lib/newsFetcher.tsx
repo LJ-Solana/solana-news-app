@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { ArticleCardProps } from '../components/ArticleCard';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-
-const NEWS_API_KEY = process.env.NEXT_PUBLIC_NEWS_API_KEY;
 
 interface NewsArticle {
   title: string;
@@ -20,15 +17,12 @@ interface NewsArticle {
 }
 
 export async function fetchNewsFromAPI() {
-  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
-  
   try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'ByteNews/1.0',
-      },
-    });
-    return response.data.articles;
+    const response = await fetch('/api/news');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   } catch (error) {
     console.error('Error fetching news:', error);
     return [];

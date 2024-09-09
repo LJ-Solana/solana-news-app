@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchNewsFromAPI } from '../../lib/newsFetcher';
+import { fetchNewsFromAPI } from '../../lib/serverNewsFetcher';
 
 export async function GET() {
   try {
