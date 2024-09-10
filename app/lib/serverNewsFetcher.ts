@@ -2,7 +2,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { ArticleCardProps } from '../components/ArticleCard';
 import { supabase } from './supabaseClient';
-import slugify from 'slugify';
+import { default as slugifyLib } from 'slugify';
 
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 
@@ -25,11 +25,7 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
   const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
-    const response = await axios.get<{ articles: NewsArticle[] }>(url, {
-      headers: {
-        'User-Agent': 'ByteNews/1.0',
-      },
-    });
+    const response = await axios.get<{ articles: NewsArticle[] }>(url);
     const articles = response.data.articles.filter((article: NewsArticle) => 
       article.urlToImage && article.author
     );
@@ -155,21 +151,19 @@ export async function getArticleBySlug(slug: string): Promise<ArticleCardProps |
     return null;
   }
 
-  const summary = await generateSummary(article.description || article.title);
-
   return {
     id: article.id,
     title: article.title,
     description: article.description || '',
     author: article.author,
     slug: article.slug,
-    publishedAt: article.publishedAt,
-    source: { name: article.source },
+    publishedAt: article.publishedAt || article.published_at, // Handle both camelCase and snake_case
+    source: typeof article.source === 'string' ? JSON.parse(article.source) : article.source,
     category: article.category,
     icon: categories[article.category as keyof typeof categories] || '📰',
     urlToImage: article.urlToImage || null,
-    verifiedBy: article.verifier,
-    summary,
+    verifiedBy: article.verifier || null,
+    summary: article.summary || '',
   };
 }
 
@@ -195,26 +189,8 @@ export function categorizeArticle(title: string, description: string): string {
   return 'Other';
 }
 
-async function generateSummary(content: string): Promise<string> {
-  try {
-    const response = await fetch('/api/generate-summary', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ content }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.summary;
-  } catch (error) {
-    console.error('Error generating summary:', error);
-    return "An error occurred while generating the summary.";
-  }
+function slugify(title: string): string {
+  return slugifyLib(title, { lower: true, remove: /[^\w\s-]/g });
 }
 
 export const categories = {

@@ -1,9 +1,7 @@
 import { supabase } from './supabaseClient';
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
-import { v4 as uuidv4 } from 'uuid';
 
-// Set up the required cryptographic function
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 export const handleVerifyArticle = async (
@@ -108,48 +106,45 @@ export async function verifyArticle(
       return { success: false, message: 'Error fetching article from database' };
     }
 
-    let articleId: string;
+    if (existingArticle) {
+      // Update existing article
+      const { error: updateError } = await supabase
+        .from('articles')
+        .update({
+          verified: true,
+          verified_by: walletAddress,
+          verified_at: new Date().toISOString(),
+        })
+        .eq('slug', articleSlug);
 
-    if (!existingArticle) {
-      // Article doesn't exist, so create it
-      const { data: newArticle, error: insertError } = await supabase
+      if (updateError) {
+        console.error('Error updating article:', articleSlug, updateError);
+        return { success: false, message: 'Error updating article in database' };
+      }
+
+      return { success: true, message: 'Article verified successfully' };
+    } else {
+      // Insert new article
+      const { error: insertError } = await supabase
         .from('articles')
         .insert({
-          id: uuidv4(),
           slug: articleSlug,
           title: articleData.title,
           content: articleData.content,
           source_url: articleData.sourceUrl,
           created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+          verified: true,
+          verified_by: walletAddress,
+          verified_at: new Date().toISOString(),
+        });
 
       if (insertError) {
         console.error('Error inserting new article:', insertError);
         return { success: false, message: 'Error creating new article in database' };
       }
 
-      articleId = newArticle!.id;
-    } else {
-      articleId = existingArticle.id;
+      return { success: true, message: 'New article created and verified successfully' };
     }
-
-    // Update the article with verification details
-    const { error: updateError } = await supabase
-      .from('articles')
-      .update({
-        verified_by: walletAddress,
-        verified_at: new Date().toISOString(),
-      })
-      .eq('id', articleId);
-
-    if (updateError) {
-      console.error('Error updating article:', articleId, updateError);
-      return { success: false, message: 'Error updating article in database' };
-    }
-
-    return { success: true, message: 'Article verified successfully' };
   } catch (error) {
     console.error('Error in verifyArticle:', error);
     return { success: false, message: 'An unexpected error occurred' };
