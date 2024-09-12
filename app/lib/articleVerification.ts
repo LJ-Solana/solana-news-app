@@ -23,14 +23,12 @@ function generateContentHash(articleData: { title: string; content: string; sour
 // Function to get PDA from slug
 function getPDAFromSlug(slug: string): web3.PublicKey {
   console.log('Getting PDA for slug:', slug);
-  // Generate a UUID v5 using the slug
   const UUID_NAMESPACE = '1b671a64-40d5-491e-99b0-da01ff1f3341';
   const uuid = uuidv5(slug, UUID_NAMESPACE);
   console.log('Generated UUID:', uuid);
   
-  // Convert UUID to a Buffer and take the first 16 bytes
   const uuidBuffer = Buffer.from(uuid.replace(/-/g, ''), 'hex').slice(0, 16);
-  console.log('UUID Buffer:', uuidBuffer.toString('hex'));
+  console.log('UUID Buffer (first 16 bytes):', uuidBuffer.toString('hex'));
   
   const [pda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from('content'), uuidBuffer],
@@ -49,85 +47,62 @@ export async function verifyArticle(
 ): Promise<{ success: boolean; message: string }> {
   console.log('Starting verifyArticle function with params:', { articleSlug, walletAddress, signature, articleData });
   try {
-    console.log('Getting program');
     const program = getProgram();
     if (!program) {
-      console.error('Failed to get program');
       throw new Error('Failed to get program');
     }
-    console.log('Program retrieved successfully');
-    
-    console.log('Verifying article:', { articleSlug, walletAddress, signature });
 
-    console.log('Generating PDA from slug');
     const pda = getPDAFromSlug(articleSlug);
-    console.log('Generated PDA:', pda.toBase58());
 
     if (!wallet.publicKey) {
-      console.error('Wallet is not connected or missing public key');
       throw new Error('Wallet is not connected or missing public key');
     }
 
-    console.log('Wallet public key:', wallet.publicKey.toBase58());
-
-    console.log('Creating new transaction');
     const transaction = new Transaction();
 
-    console.log('Creating initialize content instruction');
-    // 1. Instruction to initialize content
-    const initializeIx = await program.methods.initializeContent(
+    const submitAndVerifyIx = await program.methods.submitAndVerifyContent(
       articleSlug,
-      articleData.title,
-      articleData.content,
-      articleData.sourceUrl
+      { article: {} },
+      true,
+      true
     )
     .accounts({
       content: pda,
       author: wallet.publicKey,
+      verifier: new web3.PublicKey(walletAddress),
+      feePayer: wallet.publicKey,
       systemProgram: SystemProgram.programId,
     })
     .instruction();
 
-    console.log('Adding initialize content instruction to transaction');
-    transaction.add(initializeIx);
-
-    console.log('Creating verify content instruction');
-    // 2. Instruction to verify content
-    const verifyIx = await program.methods.verifyContent(true)
-    .accounts({
-      content: pda,
-      verifier: new web3.PublicKey(walletAddress),
-    })
-    .instruction();
-
-    console.log('Adding verify content instruction to transaction');
-    transaction.add(verifyIx);
-
-    console.log('Setting fee payer');
-    // Set the fee payer
+    transaction.add(submitAndVerifyIx);
     transaction.feePayer = wallet.publicKey;
 
-    console.log('Getting latest blockhash');
-    // Get the latest blockhash
     const latestBlockhash = await program.provider.connection.getLatestBlockhash();
     transaction.recentBlockhash = latestBlockhash.blockhash;
-    console.log('Latest blockhash:', latestBlockhash.blockhash);
 
-    console.log('Signing transaction');
-    // Sign the transaction
+    // Simulate the transaction
+    console.log('Simulating transaction...');
+    const simulation = await program.provider.connection.simulateTransaction(transaction);
+    if (simulation.value.err) {
+      console.error('Transaction simulation failed:', simulation.value.err);
+      console.error('Logs:', simulation.value.logs);
+      throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+    }
+    console.log('Transaction simulation successful');
+
     if (!wallet.signTransaction) {
-      console.error('Wallet does not support signing transactions');
       throw new Error('Wallet does not support signing transactions');
     }
     const signedTx = await wallet.signTransaction(transaction);
-    console.log('Transaction signed successfully');
     
-    console.log('Sending and confirming transaction');
-    // Send and confirm the transaction
     try {
       const txid = await wallet.sendTransaction(signedTx, program.provider.connection);
       console.log('Transaction sent. Transaction ID:', txid);
-      await program.provider.connection.confirmTransaction(txid);
+      const confirmation = await program.provider.connection.confirmTransaction(txid);
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
       console.log('On-chain verification successful. Transaction signature:', txid);
     } catch (error) {
       if (error instanceof SendTransactionError) {
@@ -140,7 +115,6 @@ export async function verifyArticle(
     }
 
     console.log('Preparing verification data for Supabase');
-    // 4. Update or insert article in Supabase
     const verificationData = {
       verified: true,
       verified_by: walletAddress,
@@ -198,7 +172,7 @@ export async function verifyArticle(
     }
 
     console.log('Article verification completed successfully');
-    return { success: true, message: 'Article verified on-chain and off-chain' };
+    return { success: true, message: 'Article submitted and verified on-chain and off-chain' };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
     if (error instanceof Error) {

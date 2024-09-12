@@ -3,7 +3,7 @@ export type NewsContent = {
   "name": "news_content",
   "instructions": [
     {
-      "name": "submitContent",
+      "name": "submitAndVerifyContent",
       "accounts": [
         {
           "name": "content",
@@ -13,6 +13,11 @@ export type NewsContent = {
         {
           "name": "author",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "verifier",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -36,34 +41,11 @@ export type NewsContent = {
           "type": {
             "defined": "ContentType"
           }
-        }
-      ]
-    },
-    {
-      "name": "verifyContent",
-      "accounts": [
-        {
-          "name": "content",
-          "isMut": true,
-          "isSigner": false
         },
         {
-          "name": "verifier",
-          "isMut": false,
-          "isSigner": true
+          "name": "isVerified",
+          "type": "bool"
         },
-        {
-          "name": "feePayer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
         {
           "name": "isValid",
           "type": "bool"
@@ -141,11 +123,6 @@ export type NewsContent = {
   "errors": [
     {
       "code": 6000,
-      "name": "AlreadyVerified",
-      "msg": "Content has already been verified"
-    },
-    {
-      "code": 6001,
       "name": "InvalidUUID",
       "msg": "Invalid UUID format"
     }
@@ -157,7 +134,7 @@ export const IDL: NewsContent = {
   "name": "news_content",
   "instructions": [
     {
-      "name": "submitContent",
+      "name": "submitAndVerifyContent",
       "accounts": [
         {
           "name": "content",
@@ -167,6 +144,11 @@ export const IDL: NewsContent = {
         {
           "name": "author",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "verifier",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -190,34 +172,11 @@ export const IDL: NewsContent = {
           "type": {
             "defined": "ContentType"
           }
-        }
-      ]
-    },
-    {
-      "name": "verifyContent",
-      "accounts": [
-        {
-          "name": "content",
-          "isMut": true,
-          "isSigner": false
         },
         {
-          "name": "verifier",
-          "isMut": false,
-          "isSigner": true
+          "name": "isVerified",
+          "type": "bool"
         },
-        {
-          "name": "feePayer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
         {
           "name": "isValid",
           "type": "bool"
@@ -295,11 +254,6 @@ export const IDL: NewsContent = {
   "errors": [
     {
       "code": 6000,
-      "name": "AlreadyVerified",
-      "msg": "Content has already been verified"
-    },
-    {
-      "code": 6001,
       "name": "InvalidUUID",
       "msg": "Invalid UUID format"
     }
