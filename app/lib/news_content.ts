@@ -16,6 +16,11 @@ export type NewsContent = {
           "isSigner": true
         },
         {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -46,6 +51,16 @@ export type NewsContent = {
           "name": "verifier",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -155,6 +170,11 @@ export const IDL: NewsContent = {
           "isSigner": true
         },
         {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -185,6 +205,16 @@ export const IDL: NewsContent = {
           "name": "verifier",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [

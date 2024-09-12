@@ -97,8 +97,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
       const walletAddress = wallet.publicKey.toBase58();
 
-      console.log('Verification data:', { slug, walletAddress, base64Signature, sourceData });
-
       const result = await verifyArticle(
         slug,
         walletAddress,
@@ -107,7 +105,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           title,
           content: description,
           sourceUrl: sourceData
-        }
+        },
+        wallet // Pass the entire wallet object
       );
 
       if (result.success) {
