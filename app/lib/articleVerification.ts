@@ -1,80 +1,31 @@
 import { supabase } from './supabaseClient';
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
+import { sha256 } from '@noble/hashes/sha256';
+import { getProgram } from './solanaClient';
+import { web3 } from '@project-serum/anchor';
+import { v5 as uuidv5 } from 'uuid';
 
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
-export const handleVerifyArticle = async (
-  id: string,
-  slug: string,
-  title: string,
-  description: string,
-  author: string,
-  category: string,
-  publishedAt: string,
-  walletAddress: string,
-  signature: string,
-  sourceData: string
-) => {
-  try {
-    // Check if the article already exists
-    const { data: existingArticle, error: fetchError } = await supabase
-      .from('articles')
-      .select('*')
-      .eq('slug', slug)
-      .single();
+// Function to generate content hash
+function generateContentHash(articleData: { title: string; content: string; sourceUrl: string }): string {
+  const contentString = `${articleData.title}|${articleData.content}|${articleData.sourceUrl}`;
+  return Buffer.from(sha256(contentString)).toString('hex');
+}
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError;
-    }
-
-    if (existingArticle) {
-      // Update the existing article
-      const { data, error } = await supabase
-        .from('articles')
-        .update({
-          verified: true,
-          verifier: walletAddress,
-          signature: signature,
-          source_data: sourceData,
-          // Update other fields as needed
-        })
-        .eq('slug', slug);
-
-      if (error) throw error;
-      
-      console.log('Article updated:', data);
-      return { success: true, message: 'Article verified and updated successfully' };
-    } else {
-      // Insert a new article if it doesn't exist
-      const { data, error } = await supabase
-        .from('articles')
-        .insert([
-          {
-            id,
-            slug,
-            title,
-            description,
-            author,
-            category,
-            published_at: publishedAt,
-            verified: true,
-            verifier: walletAddress,
-            signature: signature,
-            source_data: sourceData,
-          },
-        ]);
-
-      if (error) throw error;
-
-      console.log('New article inserted:', data);
-      return { success: true, message: 'New article verified and inserted successfully' };
-    }
-  } catch (error) {
-    console.error('Error verifying article:', error);
-    return { success: false, message: 'Failed to verify article' };
-  }
-};
+// Function to get PDA from slug
+function getPDAFromSlug(slug: string): web3.PublicKey {
+  // Generate a UUID v5 using the slug
+  const UUID_NAMESPACE = '1b671a64-40d5-491e-99b0-da01ff1f3341';
+  const uuid = uuidv5(slug, UUID_NAMESPACE);
+  
+  const [pda] = web3.PublicKey.findProgramAddressSync(
+    [Buffer.from('content'), Buffer.from(uuid)],
+    new web3.PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!)
+  );
+  return pda;
+}
 
 export async function verifyArticle(
   articleSlug: string,
@@ -83,18 +34,66 @@ export async function verifyArticle(
   articleData: { title: string; content: string; sourceUrl: string }
 ): Promise<{ success: boolean; message: string }> {
   try {
-    // Verify the signature
+    console.log('Verifying article:', { articleSlug, walletAddress, signature });
+
+    // 1. Verify signature
     const message = `Verify article: ${articleSlug}\nSource: ${articleData.sourceUrl}`;
     const encodedMessage = new TextEncoder().encode(message);
-    const signatureUint8Array = ed.etc.hexToBytes(signature);
-    const publicKeyUint8Array = ed.etc.hexToBytes(walletAddress);
+    
+    // Check if signature is base64 and convert to hex if necessary
+    const signatureHex = signature.startsWith('0x') ? signature.slice(2) : 
+                         Buffer.from(signature, 'base64').toString('hex');
+    
+    console.log('Converted signature:', signatureHex);
+
+    // Ensure walletAddress is a valid public key
+    if (!web3.PublicKey.isOnCurve(new web3.PublicKey(walletAddress))) {
+      throw new Error('Invalid wallet address');
+    }
+
+    const signatureUint8Array = ed.etc.hexToBytes(signatureHex);
+    const publicKeyUint8Array = new web3.PublicKey(walletAddress).toBytes();
 
     const isSignatureValid = await ed.verify(signatureUint8Array, encodedMessage, publicKeyUint8Array);
     if (!isSignatureValid) {
       return { success: false, message: 'Invalid signature' };
     }
 
-    // Fetch the article first to check if it exists
+    // 2. Generate content hash
+    const contentHash = generateContentHash(articleData);
+
+    // 3. Submit verification to smart contract
+    const program = await getProgram();
+    if (!program) {
+      throw new Error('Solana program not available');
+    }
+    try {
+      const tx = await program.methods.verifyContent(true)
+        .accounts({
+          content: getPDAFromSlug(articleSlug),
+          verifier: new web3.PublicKey(walletAddress),
+        })
+        .rpc();
+      console.log('On-chain verification successful. Transaction signature:', tx);
+    } catch (onChainError: unknown) {
+      console.error('On-chain verification failed:', onChainError);
+      if (onChainError instanceof Error) {
+        throw new Error(`On-chain verification failed: ${onChainError.message}`);
+      } else {
+        throw new Error('On-chain verification failed: Unknown error');
+      }
+    }
+
+    // 4. Update or insert article in Supabase
+    const verificationData = {
+      verified: true,
+      verified_by: walletAddress,
+      verified_at: new Date().toISOString(),
+      signature: signature,
+      content_hash: contentHash,
+      on_chain_verification: getPDAFromSlug(articleSlug).toString(),
+    };
+
     const { data: existingArticle, error: fetchError } = await supabase
       .from('articles')
       .select('*')
@@ -102,27 +101,17 @@ export async function verifyArticle(
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching article:', fetchError);
-      return { success: false, message: 'Error fetching article from database' };
+      throw fetchError;
     }
 
     if (existingArticle) {
       // Update existing article
       const { error: updateError } = await supabase
         .from('articles')
-        .update({
-          verified: true,
-          verified_by: walletAddress,
-          verified_at: new Date().toISOString(),
-        })
+        .update(verificationData)
         .eq('slug', articleSlug);
 
-      if (updateError) {
-        console.error('Error updating article:', articleSlug, updateError);
-        return { success: false, message: 'Error updating article in database' };
-      }
-
-      return { success: true, message: 'Article verified successfully' };
+      if (updateError) throw updateError;
     } else {
       // Insert new article
       const { error: insertError } = await supabase
@@ -133,20 +122,19 @@ export async function verifyArticle(
           content: articleData.content,
           source_url: articleData.sourceUrl,
           created_at: new Date().toISOString(),
-          verified: true,
-          verified_by: walletAddress,
-          verified_at: new Date().toISOString(),
+          ...verificationData
         });
 
-      if (insertError) {
-        console.error('Error inserting new article:', insertError);
-        return { success: false, message: 'Error creating new article in database' };
-      }
-
-      return { success: true, message: 'New article created and verified successfully' };
+      if (insertError) throw insertError;
     }
-  } catch (error) {
+
+    return { success: true, message: 'Article verified on-chain and off-chain' };
+  } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
-    return { success: false, message: 'An unexpected error occurred' };
+    if (error instanceof Error) {
+      return { success: false, message: `Verification failed: ${error.message}` };
+    } else {
+      return { success: false, message: 'Verification failed: Unknown error' };
+    }
   }
 }

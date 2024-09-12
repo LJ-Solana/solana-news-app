@@ -3,10 +3,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { handleVerifyArticle } from '../lib/articleVerification';
 import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
 import { supabase } from '../lib/supabaseClient';
+import { verifyArticle } from '../lib/articleVerification';
 
 export interface ArticleCardProps {
   id: string;
@@ -82,7 +82,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     fetchVerificationStatus();
   }, [fetchVerificationStatus]);
 
-  const verifyArticle = async (sourceData: string) => {
+  const handleVerification = async (sourceData: string) => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
       console.log('Wallet not connected or missing required properties');
       return;
@@ -91,31 +91,23 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     setIsVerifying(true);
 
     try {
-      const message = `Verify article: ${id}\nSource: ${sourceData}`;
-      console.log('Message to sign:', message);
+      const message = `Verify article: ${slug}\nSource: ${sourceData}`;
       const encodedMessage = new TextEncoder().encode(message);
-      
       const signatureBytes = await wallet.signMessage(encodedMessage);
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
-      
       const walletAddress = wallet.publicKey.toBase58();
 
-      console.log('Encoded Message:', encodedMessage);
-      console.log('Signature Bytes:', signatureBytes);
-      console.log('Base64 Signature:', base64Signature);
-      console.log('Wallet Address:', walletAddress);
+      console.log('Verification data:', { slug, walletAddress, base64Signature, sourceData });
 
-      const result = await handleVerifyArticle(
-        id,
+      const result = await verifyArticle(
         slug,
-        title,
-        description,
-        author,
-        category,
-        publishedAt,
         walletAddress,
         base64Signature,
-        sourceData
+        {
+          title,
+          content: description,
+          sourceUrl: sourceData
+        }
       );
 
       if (result.success) {
@@ -202,9 +194,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         <SourceDataModal
           isOpen={showSourceDataModal}
           onClose={() => setShowSourceDataModal(false)}
-          onSubmit={verifyArticle}
+          onSubmit={handleVerification}
           articleTitle={title}
-          articleSlug={id}
+          articleSlug={slug}
         />
       )}
       {showModal && (
