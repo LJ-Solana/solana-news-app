@@ -7,7 +7,7 @@ import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
 import { supabase } from '../lib/supabaseClient';
 import { verifyArticle } from '../lib/articleVerification';
-import AlertPopup from './AlertPopup';
+import AlertPopup from './AlertPopUp';
 
 export interface ArticleCardProps {
   id: string;
