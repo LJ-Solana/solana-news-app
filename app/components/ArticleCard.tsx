@@ -7,6 +7,7 @@ import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
 import { supabase } from '../lib/supabaseClient';
 import { verifyArticle } from '../lib/articleVerification';
+import AlertPopup from './AlertPopup';
 
 export interface ArticleCardProps {
   id: string;
@@ -48,12 +49,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
   const [imageError, setImageError] = useState(false);
+  const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
+  const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   const fetchVerificationStatus = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select('verified, verifier, signature')
+        .select('verified, verified_by, signature, on_chain_verification')
         .eq('slug', slug)
         .eq('verified', true)
         .maybeSingle();
@@ -62,8 +65,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
       if (data) {
         setIsVerified(true);
-        setVerifier(data.verifier);
+        setVerifier(data.verified_by);
         setSignature(data.signature);
+        setOnChainVerification(data.on_chain_verification);
       } else {
         console.log('Article not verified or not found');
         setIsVerified(false);
@@ -84,7 +88,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
   const handleVerification = async (sourceData: string) => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
-      console.log('Wallet not connected or missing required properties');
+      setAlert({ message: 'Wallet not connected or missing required properties', type: 'error' });
       return;
     }
 
@@ -106,19 +110,19 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           content: description,
           sourceUrl: sourceData
         },
-        wallet // Pass the entire wallet object
+        wallet
       );
 
       if (result.success) {
         await fetchVerificationStatus();
         setShowModal(true);
+        setAlert({ message: 'Article verified successfully', type: 'success' });
       } else {
-        console.log('Verification failed:', result.message);
-        // Optionally, show an error message to the user
+        setAlert({ message: `Verification failed: ${result.message}`, type: 'error' });
       }
     } catch (error) {
       console.error('Error verifying article:', error);
-      // Optionally, show an error message to the user
+      setAlert({ message: 'An error occurred while verifying the article', type: 'error' });
     } finally {
       setIsVerifying(false);
     }
@@ -163,10 +167,10 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
                 )}
               </div>
               <div className="flex flex-col text-right">
-                {isVerified && signature ? (
-                  <span className="text-pink-600">
-                    Signature: {`${signature.slice(0, 4)}...${signature.slice(-4)}`}
-                  </span>
+                {isVerified && onChainVerification ? (
+                  <a href={`https://solana.fm/tx/${onChainVerification}?cluster=devnet-solana`} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-700 underline">
+                    Signature: {`${onChainVerification.slice(0, 4)}...${onChainVerification.slice(-4)}`}
+                  </a>
                 ) : null}
               </div>
             </div>
@@ -205,6 +209,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           title={title}
           verifier={verifier || ''}
           signature={signature || ''}
+          onChainVerification={onChainVerification || ''}
+        />
+      )}
+      {alert && (
+        <AlertPopup
+          message={alert.message}
+          type={alert.type}
+          onClose={() => setAlert(null)}
         />
       )}
     </>

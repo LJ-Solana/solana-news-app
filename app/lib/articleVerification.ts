@@ -3,20 +3,21 @@ import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
 import { sha256 } from 'js-sha256';
 import { getProgram } from './solanaClient';
-import { web3, Program } from '@project-serum/anchor';
+import { web3 } from '@project-serum/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { SystemProgram, Transaction } from '@solana/web3.js';
 import { PublicKey } from '@solana/web3.js';
 import { Buffer } from 'buffer';
+import { AnchorError } from '@project-serum/anchor';
 
 // Initialize ed25519 hashing
 console.log('Initializing ed.etc.sha512Sync');
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 // Function to generate content hash
-function generateContentHash(articleData: { title: string; content: string; sourceUrl: string }): string {
+function generateContentHash(articleData: { title: string; content: string; }): string {
   console.log('Generating content hash for:', articleData);
-  const contentString = `${articleData.title}|${articleData.content}|${articleData.sourceUrl}`;
+  const contentString = `${articleData.title}|${articleData.content}`;
   const hash = sha256(contentString);
   console.log('Generated content hash:', hash);
   return hash;
@@ -117,7 +118,16 @@ async function submitAndVerifyArticle(
     return signature;
   } catch (error) {
     console.error('Error in submitAndVerifyArticle:', error);
-    if (error instanceof Error) {
+
+    if (error instanceof AnchorError) {
+      if (error.error.errorCode.code === 'ContentAlreadyVerified') {
+        console.error('Article has already been verified.');
+        throw new Error('Article has already been verified.');
+      } else {
+        console.error('AnchorError:', error.error.errorMessage);
+        throw error;
+      }
+    } else if (error instanceof Error) {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
     }
@@ -131,7 +141,7 @@ export async function verifyArticle(
   signature: string,
   articleData: { title: string; content: string; sourceUrl: string },
   wallet: WalletContextState
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; onChainSignature?: string }> {
   console.log('Starting verifyArticle function with params:', { articleSlug, walletAddress, signature, articleData });
   try {
     if (!wallet.publicKey) {
@@ -140,6 +150,8 @@ export async function verifyArticle(
     console.log('Wallet public key:', wallet.publicKey.toBase58());
 
     const contentHash = generateContentHash(articleData);
+
+    // Attempt to submit and verify the article on-chain
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
       true,
@@ -203,10 +215,13 @@ export async function verifyArticle(
     }
 
     console.log('Article verification completed successfully');
-    return { success: true, message: 'Article submitted and verified on-chain and off-chain' };
+    return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
     if (error instanceof Error) {
+      if (error.message.includes('{"Custom":6002}')) {
+        return { success: false, message: 'Article has already been verified on-chain.' };
+      }
       return { success: false, message: `Verification failed: ${error.message}` };
     } else {
       return { success: false, message: 'Verification failed: Unknown error' };
