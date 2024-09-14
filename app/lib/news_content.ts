@@ -18,7 +18,7 @@ export type NewsContent = {
         {
           "name": "verifier",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "feePayer",
@@ -33,13 +33,9 @@ export type NewsContent = {
       ],
       "args": [
         {
-          "name": "uuid",
-          "type": "string"
-        },
-        {
-          "name": "contentType",
+          "name": "contentHash",
           "type": {
-            "defined": "ContentType"
+            "array": ["u8", 32]
           }
         },
         {
@@ -64,13 +60,9 @@ export type NewsContent = {
             "type": "publicKey"
           },
           {
-            "name": "uuid",
-            "type": "string"
-          },
-          {
-            "name": "contentType",
+            "name": "contentHash",
             "type": {
-              "defined": "ContentType"
+              "array": ["u8", 32]
             }
           },
           {
@@ -101,30 +93,16 @@ export type NewsContent = {
       }
     }
   ],
-  "types": [
-    {
-      "name": "ContentType",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Article"
-          },
-          {
-            "name": "Image"
-          },
-          {
-            "name": "Video"
-          }
-        ]
-      }
-    }
-  ],
   "errors": [
     {
       "code": 6000,
       "name": "InvalidUUID",
       "msg": "Invalid UUID format"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidUUIDLength",
+      "msg": "UUID exceeds maximum allowed length"
     }
   ]
 };
@@ -149,7 +127,7 @@ export const IDL: NewsContent = {
         {
           "name": "verifier",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "feePayer",
@@ -164,13 +142,9 @@ export const IDL: NewsContent = {
       ],
       "args": [
         {
-          "name": "uuid",
-          "type": "string"
-        },
-        {
-          "name": "contentType",
+          "name": "contentHash",
           "type": {
-            "defined": "ContentType"
+            "array": ["u8", 32]
           }
         },
         {
@@ -195,13 +169,9 @@ export const IDL: NewsContent = {
             "type": "publicKey"
           },
           {
-            "name": "uuid",
-            "type": "string"
-          },
-          {
-            "name": "contentType",
+            "name": "contentHash",
             "type": {
-              "defined": "ContentType"
+              "array": ["u8", 32]
             }
           },
           {
@@ -232,30 +202,16 @@ export const IDL: NewsContent = {
       }
     }
   ],
-  "types": [
-    {
-      "name": "ContentType",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Article"
-          },
-          {
-            "name": "Image"
-          },
-          {
-            "name": "Video"
-          }
-        ]
-      }
-    }
-  ],
   "errors": [
     {
       "code": 6000,
       "name": "InvalidUUID",
       "msg": "Invalid UUID format"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidUUIDLength",
+      "msg": "UUID exceeds maximum allowed length"
     }
   ]
 };
