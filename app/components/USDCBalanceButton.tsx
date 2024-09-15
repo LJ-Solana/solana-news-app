@@ -43,7 +43,7 @@ const USDCBalanceButton: React.FC = () => {
     <button className="bg-white hover:bg-gray-100 text-blue-500 font-bold py-2 px-4 rounded border border-blue-500 h-[48px] flex items-center justify-center">
       <Image src="/usdc-logo.png" alt="USDC Logo" width={24} height={24} unoptimized />
       <span className="ml-2">
-        {balance !== null ? `${balance.toFixed(2)}` : 'Loading...'}
+        {balance !== null ? `${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'Loading...'}
       </span>
     </button>
   );

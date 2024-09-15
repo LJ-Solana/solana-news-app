@@ -204,7 +204,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
                   <FaCheckCircle className="inline-block mr-1" />
                   Verified
                 </>
-              ) : isVerifying ? 'Verifying...' : 'Verify'}
+              ) : isVerifying ? (
+                'Verifying...'
+              ) : (
+                <>
+                  <Image src="/usdc-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block mr-1" />
+                  Verify ($5)
+                </>
+              )}
             </button>
             <button
               onClick={handleChallenge}
