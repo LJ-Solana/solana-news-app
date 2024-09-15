@@ -22,7 +22,7 @@ interface ArticleWithId extends NewsArticle {
 }
 
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
-  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
+  const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=50&apiKey=${NEWS_API_KEY}`;
   
   try {
     const response = await axios.get<{ articles: NewsArticle[] }>(url);
@@ -144,30 +144,34 @@ export async function getNews(): Promise<ArticleCardProps[]> {
 }
 
 export async function getArticleBySlug(slug: string): Promise<ArticleCardProps | null> {
-  const { data: article, error } = await supabase
+  const { data, error } = await supabase
     .from('articles')
     .select('*')
     .eq('slug', slug)
     .single();
 
-  if (error || !article) {
-    console.error("Error fetching article:", error);
+  if (error) {
+    console.error('Error fetching article:', error);
+    return null;
+  }
+
+  if (!data) {
     return null;
   }
 
   return {
-    id: article.id,
-    title: article.title,
-    description: article.description || '',
-    author: article.author,
-    slug: article.slug,
-    publishedAt: article.publishedAt || article.published_at, // Handle both camelCase and snake_case
-    source: typeof article.source === 'string' ? JSON.parse(article.source) : article.source,
-    category: article.category,
-    icon: categories[article.category as keyof typeof categories] || '📰',
-    urlToImage: article.url_to_image || null,  // Change this line
-    verifiedBy: article.verifier || null,
-    summary: article.summary || '',
+    id: data.id,
+    slug: data.slug,
+    title: data.title,
+    description: data.description,
+    author: data.author,
+    publishedAt: data.publishedAt,
+    source: typeof data.source === 'string' ? JSON.parse(data.source) : data.source,
+    category: data.category,
+    icon: categories[data.category as keyof typeof categories] || '📰',
+    urlToImage: data.url_to_image,
+    verifiedBy: data.verified_by,
+    summary: data.summary,
   };
 }
 

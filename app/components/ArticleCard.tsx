@@ -29,7 +29,6 @@ export interface ArticleCardProps {
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ 
-  id, 
   slug,
   title, 
   description, 
@@ -141,7 +140,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   return (
     <>
       <div className="bg-white rounded-lg shadow-xlg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
-        <Link href={`/article/${id}`} className="block flex-grow">
+        <Link href={`/article/${slug}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
               src={imageError ? '/placeholder-image.jpg' : (urlToImage || '/placeholder-image.jpg')}
@@ -187,7 +186,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           </div>
         </Link>
         <div className="px-4 pb-4 mt-auto flex flex-col space-y-2">
-          <Link href={`/article/${id}`} className="w-full">
+          <Link href={`/article/${slug}`} className="w-full">
             <button className="w-full py-2 rounded-md text-gray-600 font-medium transition duration-300 bg-gray-100 hover:bg-gray-200 text-base">
               Read Summary
             </button>

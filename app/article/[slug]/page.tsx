@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaLink, FaTag } from 'react-icons/fa';
 import { getArticleBySlug } from '../../lib/serverNewsFetcher';
 import { categories } from '../../lib/serverNewsFetcher';
+import { GenerateSummary } from './GenerateSummary';
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   const article = await getArticleBySlug(params.slug);
@@ -76,7 +77,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           {/* AI Summary */}
           <section className="mb-8 bg-blue-50 p-4 rounded-lg">
             <h2 className="text-2xl font-semibold mb-2">AI Summary</h2>
-            <div className="text-gray-800 leading-relaxed">{article.summary}</div>
+            <GenerateSummary content={article.description} />
           </section>
           
           {/* Tags */}
