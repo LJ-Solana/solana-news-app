@@ -48,7 +48,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [showSourceDataModal, setShowSourceDataModal] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
-  const [imageError, setImageError] = useState(false);
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
@@ -149,7 +148,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ objectFit: 'cover' }}
-              onError={() => setImageError(true)}
             />
           </div>
           <div className="p-4 space-y-3 flex-grow">
@@ -188,7 +186,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         </Link>
         <div className="px-4 pb-4 mt-auto flex flex-col space-y-2">
           <Link href={`/article/${slug}`} className="w-full">
-            <button className="w-full py-2 rounded-md text-gray-600 font-medium transition duration-300 bg-gray-100 hover:bg-gray-200 text-base">
+            <button className="w-full py-2 rounded-md text-purple-600 font-medium transition duration-300 bg-purple-50 hover:bg-purple-100 text-base">
               Read Summary
             </button>
           </Link>

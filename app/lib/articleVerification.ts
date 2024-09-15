@@ -185,7 +185,6 @@ async function submitAndVerifyArticle(
         if (attempts >= maxAttempts) {
           throw new Error('Transaction confirmation failed after multiple attempts.');
         }
-        // Adding a delay between retries (e.g., 5 seconds)
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }
     }
@@ -218,7 +217,6 @@ export async function verifyArticle(
 
     const contentHash = generateContentHash(articleData);
 
-    // Attempt to submit and verify the article on-chain
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
       true, 
@@ -226,27 +224,27 @@ export async function verifyArticle(
       wallet
     );
 
-    console.log('Preparing verification data for Supabase');
     const verificationData = {
       slug: articleSlug,
-      title: articleData.title,
-      content: articleData.content,
-      description: articleData.description || '',
-      source_url: articleData.sourceUrl,
-      author: articleData.author,
-      published_at: articleData.publishedAt,
-      url_to_image: articleData.urlToImage,
       verified: true,
+      signature: signature,
+      author: articleData.author,
+      title: articleData.title,
+      description: articleData.description || '',
+      published_at: articleData.publishedAt,
+      source: articleData.sourceUrl || '',
+      url_to_image: articleData.urlToImage || null,
+      on_chain_verification: onChainSignature,
+      content_hash: contentHash,
       verified_by: walletAddress,
       verified_at: new Date().toISOString(),
-      signature: signature,
-      content_hash: contentHash,
-      on_chain_verification: onChainSignature,
+      content: articleData.content || '',
+      source_url: articleData.sourceUrl || '',
     };
+
     console.log('Verification data:', verificationData);
 
-    console.log('Upserting article in Supabase');
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('articles')
       .upsert(verificationData, { 
         onConflict: 'slug',
@@ -257,7 +255,26 @@ export async function verifyArticle(
       console.error('Error upserting article:', error);
       throw error;
     }
-    console.log('Article upserted successfully');
+
+    console.log('Supabase response:', { data, error });
+
+    // Update verifier stats
+    const { data: statsData, error: statsError } = await supabase
+      .from('verifier_stats')
+      .upsert({
+        pubkey: walletAddress,
+        total_verifications: 1
+      }, {
+        onConflict: 'pubkey',
+        ignoreDuplicates: false
+      });
+
+    if (statsError) {
+      console.error('Error updating verifier stats:', statsError);
+      // Don't throw here, as the main verification was successful
+    } else {
+      console.log('Verifier stats updated:', statsData);
+    }
 
     return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {
