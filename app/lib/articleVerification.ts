@@ -258,24 +258,6 @@ export async function verifyArticle(
 
     console.log('Supabase response:', { data, error });
 
-    // Update verifier stats
-    const { data: statsData, error: statsError } = await supabase
-      .from('verifier_stats')
-      .upsert({
-        pubkey: walletAddress,
-        total_verifications: 1
-      }, {
-        onConflict: 'pubkey',
-        ignoreDuplicates: false
-      });
-
-    if (statsError) {
-      console.error('Error updating verifier stats:', statsError);
-      // Don't throw here, as the main verification was successful
-    } else {
-      console.log('Verifier stats updated:', statsData);
-    }
-
     return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
