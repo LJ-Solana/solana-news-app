@@ -246,15 +246,16 @@ export async function verifyArticle(
     console.log('Verification data:', verificationData);
 
     console.log('Upserting article in Supabase');
-    const { error: upsertError } = await supabase
+    const { error } = await supabase
       .from('articles')
       .upsert(verificationData, { 
-        onConflict: 'slug' 
+        onConflict: 'slug',
+        ignoreDuplicates: false 
       });
 
-    if (upsertError) {
-      console.error('Error upserting article:', upsertError);
-      throw upsertError;
+    if (error) {
+      console.error('Error upserting article:', error);
+      throw error;
     }
     console.log('Article upserted successfully');
 

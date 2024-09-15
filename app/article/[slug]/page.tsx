@@ -42,10 +42,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </div>
           
           {/* Featured image */}
-          {article.urlToImage && (
+          {article.url_to_image && (
             <div className="mb-6 relative w-full h-64 md:h-96">
               <Image 
-                src={article.urlToImage} 
+                src={article.url_to_image} 
                 alt={article.title} 
                 fill 
                 style={{ objectFit: 'cover' }} 

@@ -33,7 +33,7 @@ export default function VerifyArticlePage() {
               <li>When you choose to verify an article, $5 USDC will be automatically deposited into the escrow contract.</li>
               <li>This deposit is held securely while you complete the verification process.</li>
               <li>If your verification is accepted, your deposit is returned to you along with any earned rewards.</li>
-              <li>If your verification is challenged and found to be incorrect, you may lose your deposit as a penalty.</li>
+              <li>If your verification is challenged and found to be incorrect, you will lose your deposit as a penalty.</li>
             </ol>
             <p className="flex items-start">
               <FaInfoCircle className="text-blue-500 mr-2 mt-1 flex-shrink-0" />

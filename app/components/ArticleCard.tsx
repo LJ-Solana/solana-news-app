@@ -22,7 +22,7 @@ export interface ArticleCardProps {
   };
   category: string;
   icon: string;
-  urlToImage: string | null;
+  url_to_image: string | null;
   featured?: boolean;
   verifiedBy?: string;
   summary?: string;
@@ -37,7 +37,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   source, 
   category, 
   icon, 
-  urlToImage, 
+  url_to_image,
   featured = false,
 }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -112,7 +112,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           author,
           description,
           publishedAt,
-          urlToImage: urlToImage || ''
+          urlToImage: url_to_image || ''
         },
         wallet
       );
@@ -143,7 +143,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         <Link href={`/article/${slug}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
-              src={imageError ? '/placeholder-image.jpg' : (urlToImage || '/placeholder-image.jpg')}
+              src={url_to_image || '/placeholder-image.png'}
               alt={title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

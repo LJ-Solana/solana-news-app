@@ -17,9 +17,6 @@ interface NewsArticle {
   };
 }
 
-interface ArticleWithId extends NewsArticle {
-  id: string;
-}
 
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
   const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=30&apiKey=${NEWS_API_KEY}`;
@@ -31,16 +28,8 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
     );
 
     const articlesToInsert = articles.map(article => ({
-      id: uuidv4(),
-      title: article.title,
-      description: article.description || null, 
-      author: article.author,
-      url_to_image: article.urlToImage || null, 
-      publishedAt: article.publishedAt,
-      source: JSON.stringify(article.source), 
-      verified: false,
-      slug: slugify(article.title),
-      category: categorizeArticle(article.title, article.description || '')
+      ...article,
+      url_to_image: article.urlToImage // Convert urlToImage to url_to_image
     }));
 
     const { error } = await supabase
@@ -66,45 +55,36 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
 export async function getNews(): Promise<ArticleCardProps[]> {
   try {
     const newsArticles = await fetchNewsFromAPI();
-    
-    const uniqueArticles = new Map<string, ArticleWithId>();
+    console.log('Fetched from API:', newsArticles.length);
 
-    newsArticles.forEach((article: NewsArticle) => {
-      const slug = slugify(article.title);
-      if (!uniqueArticles.has(slug)) {
-        uniqueArticles.set(slug, {
-          ...article,
-          id: uuidv4(),
-        });
-      }
-    });
-
-    const articlesToInsert = Array.from(uniqueArticles.values()).map((article) => ({
-      id: article.id,
+    const articlesToInsert = newsArticles.map((article) => ({
+      id: uuidv4(),
       title: article.title,
-      description: article.description || null, 
-      author: article.author,
-      url_to_image: article.urlToImage,  // Change this line
-      publishedAt: article.publishedAt,
-      source: article.source,
+      description: article.description || '',
+      author: article.author || 'Unknown',
+      url_to_image: article.urlToImage || null, 
+      publishedAt: article.publishedAt || new Date().toISOString(),
+      source: JSON.stringify(article.source),
       verified: false,
       slug: slugify(article.title),
       category: categorizeArticle(article.title, article.description || ''),
     }));
 
-    // Upsert new articles
-    const { error: insertError } = await supabase
+    const { data, error } = await supabase
       .from('articles')
       .upsert(articlesToInsert, { 
         onConflict: 'slug',
-        ignoreDuplicates: true
-      });
+        ignoreDuplicates: false
+      })
+      .select();
 
-    if (insertError) {
-      console.error("Error inserting/updating articles:", insertError);
+    if (error) {
+      console.error("Error inserting/updating articles:", error);
+    } else {
+      console.log('Upserted articles:', data?.length);
     }
 
-    // Fetch all articles, including verified ones
+    // Fetch all articles, including newly inserted ones
     const { data: allArticles, error: fetchError } = await supabase
       .from('articles')
       .select('*')
@@ -115,26 +95,24 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       return [];
     }
 
-    const processedArticles: ArticleCardProps[] = allArticles.map((article) => {
-      const category = article.category || categorizeArticle(article.title, article.description || '');
-      return {
-        id: article.id,
-        title: article.title,
-        author: article.author,
-        publishedAt: article.publishedAt,
-        source: typeof article.source === 'string' 
-          ? JSON.parse(article.source) 
-          : (article.source || { name: 'Unknown' }),
-        description: article.description || '',
-        slug: article.slug,
-        verifiedBy: article.verified_by || null,
-        category,
-        icon: categories[category as keyof typeof categories] || '📰',
-        summary: article.summary || '',
-        urlToImage: article.url_to_image || null,  // Change this line
-      };
-    });
+    const processedArticles: ArticleCardProps[] = allArticles.map((article) => ({
+      id: article.id,
+      title: article.title,
+      author: article.author,
+      publishedAt: article.publishedAt,
+      source: typeof article.source === 'string' 
+        ? JSON.parse(article.source) 
+        : (article.source || { name: 'Unknown' }),
+      description: article.description || '',
+      slug: article.slug,
+      verifiedBy: article.verified_by || null,
+      category: article.category || categorizeArticle(article.title, article.description || ''),
+      icon: categories[article.category as keyof typeof categories] || '📰',
+      summary: article.summary || '',
+      url_to_image: article.url_to_image || null,
+    }));
 
+    console.log('Processed articles:', processedArticles.length);
     return processedArticles;
   } catch (error) {
     console.error("Failed to fetch news:", error);
@@ -168,7 +146,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleCardProps |
     source: typeof data.source === 'string' ? JSON.parse(data.source) : data.source,
     category: data.category,
     icon: categories[data.category as keyof typeof categories] || '📰',
-    urlToImage: data.url_to_image,
+    url_to_image: data.url_to_image,
     verifiedBy: data.verified_by,
     summary: data.summary,
   };

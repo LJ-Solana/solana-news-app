@@ -1,19 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getNews } from '../lib/serverNewsFetcher';
-
-interface ArticleCardProps {
-  id: string;
-  category: string;
-  title: string;
-  description: string;
-  author: string;
-  urlToImage: string | null;
-  publishedAt: string;
-  source: {
-    name: string;
-  };
-  verifiedBy: string | null;
-}
+import { ArticleCardProps } from '../components/ArticleCard';
 
 export function useNews() {
   const [articles, setArticles] = useState<ArticleCardProps[]>([]);
@@ -24,9 +11,10 @@ export function useNews() {
   useEffect(() => {
     async function fetchNews() {
       const newsData = await getNews();
-      setArticles(newsData as ArticleCardProps[]);
-      setFeaturedArticles(newsData.slice(0, 3) as ArticleCardProps[]);
-      setFilteredArticles(newsData as ArticleCardProps[]);
+      console.log('Fetched news data:', newsData); 
+      setArticles(newsData);
+      setFeaturedArticles(newsData.slice(0, 3));
+      setFilteredArticles(newsData);
     }
     fetchNews();
   }, []);
@@ -35,7 +23,7 @@ export function useNews() {
     if (selectedCategory) {
       setFilteredArticles(articles.filter(article => article.category === selectedCategory));
     } else {
-      setFilteredArticles(articles); 
+      setFilteredArticles(articles);
     }
   }, [articles, selectedCategory]);
 

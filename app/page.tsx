@@ -11,7 +11,7 @@ import { useNews } from './lib/useNews';
 import USDCBalanceButton from './components/USDCBalanceButton';
 
 export default function Home() {
-  const { featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
+  const { articles, featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
 
@@ -26,6 +26,8 @@ export default function Home() {
   const displayedArticles = showVerifiedOnly
     ? filteredArticles.filter(article => article.verifiedBy != null)
     : filteredArticles;
+
+  console.log('Total articles:', articles.length); // Add this line for debugging
 
   return (
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen">
@@ -88,15 +90,8 @@ export default function Home() {
             Featured Bytes
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredArticles.map((article) => (
-              <ArticleCard
-                key={article.id}
-                {...article}
-                featured={true}
-                slug={article.id}
-                icon={categories[article.category as keyof typeof categories]}
-                verifiedBy={article.verifiedBy || undefined}
-              />
+            {featuredArticles.map(article => (
+              <ArticleCard key={article.id} {...article} featured={true} />
             ))}
           </div>
         </section>
@@ -130,14 +125,8 @@ export default function Home() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {displayedArticles.map((article) => (
-              <ArticleCard 
-                key={article.id}
-                {...article}
-                slug={article.id}
-                icon={categories[article.category as keyof typeof categories]}
-                verifiedBy={article.verifiedBy || undefined}
-              />
+            {displayedArticles.map(article => (
+              <ArticleCard key={article.id} {...article} />
             ))}
           </div>
         </section>
