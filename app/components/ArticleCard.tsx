@@ -108,7 +108,10 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         {
           title,
           content: description,
-          sourceUrl: sourceData
+          sourceUrl: sourceData,
+          author,
+          publishedAt,
+          urlToImage: urlToImage || ''
         },
         wallet
       );

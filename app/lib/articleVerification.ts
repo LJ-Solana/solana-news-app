@@ -5,17 +5,21 @@ import { sha256 } from 'js-sha256';
 import { getProgram } from './solanaClient';
 import { web3 } from '@project-serum/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import { SystemProgram, Transaction } from '@solana/web3.js';
-import { PublicKey } from '@solana/web3.js';
+import { SystemProgram, Transaction, PublicKey, Connection, clusterApiUrl } from '@solana/web3.js';
+import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Buffer } from 'buffer';
 import { AnchorError } from '@project-serum/anchor';
+
+// USDC token mint address (your devnet USDC token)
+const USDC_TEST_TOKEN_MINT_ADDRESS = new PublicKey('5ruoovCtJDSuQcrUU3LQ4yMZuSAVBGCc6885Qh6P2Vz9');
+const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'); // Correct SPL Token Program ID
 
 // Initialize ed25519 hashing
 console.log('Initializing ed.etc.sha512Sync');
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 // Function to generate content hash
-function generateContentHash(articleData: { title: string; content: string; }): string {
+function generateContentHash(articleData: { title: string; content: string }): string {
   console.log('Generating content hash for:', articleData);
   const contentString = `${articleData.title}|${articleData.content}`;
   const hash = sha256(contentString);
@@ -38,6 +42,51 @@ export function getPDAFromContentHash(contentHash: string): web3.PublicKey {
   return pda;
 }
 
+// Function to get or create the escrow token account
+async function getOrCreateEscrowTokenAccount(connection: Connection, wallet: WalletContextState, escrowAuthorityPDA: PublicKey) {
+  const associatedTokenAddress = await getAssociatedTokenAddress(
+    USDC_TEST_TOKEN_MINT_ADDRESS,
+    escrowAuthorityPDA,
+    true,
+    SPL_TOKEN_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID // Using the correct Associated Token Account Program ID
+  );
+
+  console.log('Associated Token Address:', associatedTokenAddress.toBase58());
+
+  // Check if the account already exists
+  const accountInfo = await connection.getAccountInfo(associatedTokenAddress);
+  
+  if (!accountInfo) {
+    console.log('Creating new associated token account');
+    const transaction = new Transaction();
+    const createATAIx = createAssociatedTokenAccountInstruction(
+      wallet.publicKey!,
+      associatedTokenAddress,
+      escrowAuthorityPDA,
+      USDC_TEST_TOKEN_MINT_ADDRESS,
+      SPL_TOKEN_PROGRAM_ID, // Correct SPL Token Program ID
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    transaction.add(createATAIx);
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    transaction.feePayer = wallet.publicKey!;
+
+    if (wallet.signTransaction) {
+        const signedTx = await wallet.signTransaction(transaction);
+        const txId = await connection.sendRawTransaction(signedTx.serialize());
+        await connection.confirmTransaction(txId, 'confirmed');
+    } else {
+        throw new Error('Wallet does not support signing transactions');
+    }
+  } else {
+    console.log('Associated token account already exists');
+  }
+
+  return associatedTokenAddress;
+}
+
+// Function to submit and verify an article with escrow mechanism
 async function submitAndVerifyArticle(
   contentHash: string,
   isVerified: boolean,
@@ -58,7 +107,7 @@ async function submitAndVerifyArticle(
 
     console.log('Content Hash Buffer:', contentHashBuffer.toString('hex'));
 
-    const [contentPDA, bump] = PublicKey.findProgramAddressSync(
+    const [contentPDA ] = PublicKey.findProgramAddressSync(
       [Buffer.from('content'), contentHashBuffer],
       program.programId
     );
@@ -70,17 +119,34 @@ async function submitAndVerifyArticle(
       throw new Error('isVerified and isValid must be boolean values');
     }
 
+    // Get the escrow authority PDA
+    const [escrowAuthorityPDA] = PublicKey.findProgramAddressSync([Buffer.from('escrow_authority')], program.programId);
+
+    // Get or create the escrow token account
+    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+    const escrowTokenAccount = await getOrCreateEscrowTokenAccount(connection, wallet, escrowAuthorityPDA);
+
     // Prepare the transaction
     const tx = new Transaction();
 
-    // Corrected: Pass contentHashBuffer directly
+    // Add instruction for submitting and verifying content
     const submitAndVerifyIx = await program.methods
-      .submitAndVerifyContent(contentHashBuffer, isVerified, isValid)
+      .submitAndVerifyContentWithStake(contentHashBuffer)
       .accounts({
         content: contentPDA,
         author: wallet.publicKey!,
-        verifier: wallet.publicKey!, // Adjust if the verifier is different
+        verifier: wallet.publicKey!,
+        verifierUsdcTokenAccount: await getAssociatedTokenAddress(
+          USDC_TEST_TOKEN_MINT_ADDRESS,
+          wallet.publicKey!,
+          false,
+          SPL_TOKEN_PROGRAM_ID, // Correct SPL Token Program ID
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        ),
+        escrowTokenAccount,  // Escrow account to receive USDC
+        escrowAuthority: escrowAuthorityPDA,
         feePayer: wallet.publicKey!,
+        tokenProgram: SPL_TOKEN_PROGRAM_ID, // Correct SPL Token Program ID
         systemProgram: SystemProgram.programId,
       })
       .instruction();
@@ -89,7 +155,9 @@ async function submitAndVerifyArticle(
 
     // Add the instruction to the transaction
     tx.add(submitAndVerifyIx);
-    tx.recentBlockhash = (await program.provider.connection.getLatestBlockhash()).blockhash;
+
+    // Set the recentBlockhash (fixing recentBlockhash error)
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = wallet.publicKey!;
 
     if (!wallet.signTransaction) {
@@ -100,7 +168,7 @@ async function submitAndVerifyArticle(
     const signedTx = await wallet.signTransaction(tx);
 
     console.log('Simulating transaction...');
-    const simulation = await program.provider.connection.simulateTransaction(signedTx);
+    const simulation = await connection.simulateTransaction(signedTx);
 
     if (simulation.value.err) {
       console.error('Transaction simulation failed:', simulation.value.err);
@@ -109,10 +177,10 @@ async function submitAndVerifyArticle(
     }
 
     console.log('Transaction simulation successful, sending transaction...');
-    const signature = await program.provider.connection.sendRawTransaction(signedTx.serialize());
+    const signature = await connection.sendRawTransaction(signedTx.serialize());
     console.log('Transaction sent, signature:', signature);
 
-    const confirmation = await program.provider.connection.confirmTransaction(signature, 'confirmed');
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
     console.log('Transaction confirmation:', confirmation);
 
     return signature;
@@ -139,7 +207,7 @@ export async function verifyArticle(
   articleSlug: string,
   walletAddress: string,
   signature: string,
-  articleData: { title: string; content: string; sourceUrl: string },
+  articleData: { title: string; content: string; sourceUrl: string; author: string; publishedAt: string; urlToImage: string },
   wallet: WalletContextState
 ): Promise<{ success: boolean; message: string; onChainSignature?: string }> {
   console.log('Starting verifyArticle function with params:', { articleSlug, walletAddress, signature, articleData });
@@ -154,8 +222,8 @@ export async function verifyArticle(
     // Attempt to submit and verify the article on-chain
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
-      true,
-      true,
+      true, 
+      true, 
       wallet
     );
 
@@ -167,54 +235,30 @@ export async function verifyArticle(
       signature: signature,
       content_hash: contentHash,
       on_chain_verification: onChainSignature,
+      author: articleData.author,
+      published_at: articleData.publishedAt,
+      url_to_image: articleData.urlToImage,
+      slug: articleSlug,
+      title: articleData.title,
+      content: articleData.content,
+      source_url: articleData.sourceUrl,
     };
     console.log('Verification data:', verificationData);
 
-    console.log('Checking if article exists in Supabase');
-    const { data: existingArticle, error: fetchError } = await supabase
+    console.log('Updating article in Supabase');
+    const { error: updateError } = await supabase
       .from('articles')
-      .select('*')
-      .eq('slug', articleSlug)
-      .single();
+      .upsert(verificationData, {
+        onConflict: 'slug',
+        update: ['verified', 'verified_by', 'verified_at', 'signature', 'content_hash', 'on_chain_verification', 'author', 'published_at', 'url_to_image', 'title', 'content', 'source_url'],
+      });
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching article:', fetchError);
-      throw fetchError;
+    if (updateError) {
+      console.error('Error updating article:', updateError);
+      throw updateError;
     }
+    console.log('Article updated successfully');
 
-    if (existingArticle) {
-      console.log('Updating existing article in Supabase');
-      const { error: updateError } = await supabase
-        .from('articles')
-        .update(verificationData)
-        .eq('slug', articleSlug);
-
-      if (updateError) {
-        console.error('Error updating article:', updateError);
-        throw updateError;
-      }
-      console.log('Article updated successfully');
-    } else {
-      console.log('Inserting new article in Supabase');
-      const { error: insertError } = await supabase
-        .from('articles')
-        .insert({
-          slug: articleSlug,
-          title: articleData.title,
-          content: articleData.content,
-          source_url: articleData.sourceUrl,
-          created_at: new Date().toISOString(),
-          ...verificationData,
-        });
-
-      if (insertError) {
-        console.error('Error inserting article:', insertError);
-        throw insertError;
-      }
-      console.log('Article inserted successfully');
-    }
-
-    console.log('Article verification completed successfully');
     return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
