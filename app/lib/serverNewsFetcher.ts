@@ -22,7 +22,7 @@ interface ArticleWithId extends NewsArticle {
 }
 
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
-  const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=50&apiKey=${NEWS_API_KEY}`;
+  const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
     const response = await axios.get<{ articles: NewsArticle[] }>(url);
@@ -35,7 +35,7 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
       title: article.title,
       description: article.description || null, 
       author: article.author,
-      url_to_image: article.urlToImage || null,  // Change this line
+      url_to_image: article.urlToImage || null, 
       publishedAt: article.publishedAt,
       source: JSON.stringify(article.source), 
       verified: false,
@@ -65,7 +65,6 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
 
 export async function getNews(): Promise<ArticleCardProps[]> {
   try {
-    // Fetch new articles from API
     const newsArticles = await fetchNewsFromAPI();
     
     const uniqueArticles = new Map<string, ArticleWithId>();

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -20,6 +21,7 @@ export default function Home() {
   const toggleVerifiedFilter = () => {
     setShowVerifiedOnly(!showVerifiedOnly);
   };
+
   const displayedArticles = showVerifiedOnly
     ? filteredArticles.filter(article => article.verifiedBy != null)
     : filteredArticles;
@@ -48,7 +50,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex items-center">
             <WalletButton />
           </div>
         </div>

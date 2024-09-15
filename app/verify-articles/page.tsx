@@ -5,6 +5,7 @@ import WalletButton from '../components/WalletButton';
 import Link from 'next/link';
 import { FaArrowLeft, FaInfoCircle } from 'react-icons/fa';
 
+
 export default function VerifyArticlePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">

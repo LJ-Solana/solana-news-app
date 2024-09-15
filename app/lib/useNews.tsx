@@ -44,6 +44,6 @@ export function useNews() {
     featuredArticles,
     filteredArticles,
     selectedCategory,
-    setSelectedCategory
+    setSelectedCategory,
   };
 }
