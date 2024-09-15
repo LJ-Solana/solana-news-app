@@ -272,7 +272,7 @@ export async function verifyArticle(
           pauseOnHover: true,
           draggable: true,
         });
-        return { success: false, message: 'Article already been submitted and verified.' };
+        return { success: false, message: 'Article already submitted and verified.' };
       }
       if (error.message.includes('custom program error: 0xbc4')) {
         toast.warning('Please top up USDC', {
