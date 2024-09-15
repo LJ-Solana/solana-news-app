@@ -58,27 +58,28 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         .from('articles')
         .select('verified, verified_by, signature, on_chain_verification')
         .eq('slug', slug)
-        .eq('verified', true)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        setIsVerified(true);
+        setIsVerified(data.verified || data.on_chain_verification !== null);
         setVerifier(data.verified_by);
         setSignature(data.signature);
         setOnChainVerification(data.on_chain_verification);
       } else {
-        console.log('Article not verified or not found');
+        console.log('Article not found');
         setIsVerified(false);
         setVerifier(undefined);
         setSignature(null);
+        setOnChainVerification(null);
       }
     } catch (error) {
       console.error('Error fetching verification status:', error);
       setIsVerified(false);
       setVerifier(undefined);
       setSignature(null);
+      setOnChainVerification(null);
     }
   }, [slug]);
 
@@ -139,7 +140,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
+      <div className="bg-white rounded-lg shadow-xlg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
         <Link href={`/article/${id}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
@@ -187,23 +188,28 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         </Link>
         <div className="px-4 pb-4 mt-auto flex flex-col space-y-2">
           <Link href={`/article/${id}`} className="w-full">
-            <button className="w-full py-3 rounded-md text-white font-semibold transition duration-300 bg-purple-500 hover:bg-purple-600 text-lg">
+            <button className="w-full py-2 rounded-md text-gray-600 font-medium transition duration-300 bg-gray-100 hover:bg-gray-200 text-base">
               Read Summary
             </button>
           </Link>
           <div className="flex space-x-2">
             <button
               onClick={() => setShowSourceDataModal(true)}
-              className={`flex-1 py-2 px-3 rounded-md text-white font-semibold transition duration-300 text-sm ${
-                isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+              className={`flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm ${
+                isVerified ? 'bg-blue-50 text-blue-600 cursor-not-allowed' : isVerifying ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
               }`}
               disabled={isVerified || isVerifying}
             >
-              {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify'}
+              {isVerified ? (
+                <>
+                  <FaCheckCircle className="inline-block mr-1" />
+                  Verified
+                </>
+              ) : isVerifying ? 'Verifying...' : 'Verify'}
             </button>
             <button
               onClick={handleChallenge}
-              className="flex-1 py-2 px-3 rounded-md text-white font-semibold transition duration-300 bg-red-500 hover:bg-red-600 text-sm"
+              className="flex-1 py-1.5 px-3 rounded-md text-red-600 font-medium transition duration-300 bg-red-50 hover:bg-red-100 text-sm"
             >
               Challenge
             </button>

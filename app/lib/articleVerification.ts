@@ -131,7 +131,7 @@ async function submitAndVerifyArticle(
 
     // Add instruction for submitting and verifying content
     const submitAndVerifyIx = await program.methods
-      .submitAndVerifyContentWithStake(contentHashBuffer)
+      .submitAndVerifyContentWithStake(Array.from(contentHashBuffer))
       .accounts({
         content: contentPDA,
         author: wallet.publicKey!,
@@ -307,7 +307,7 @@ export async function verifyArticle(
         });
         return { success: false, message: 'Insufficient USDC balance. Please top up.' };
       }
-      toast.error(`Verification failed: ${error.message}`, {
+      toast.error(`${error.message}`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
@@ -315,7 +315,7 @@ export async function verifyArticle(
         pauseOnHover: true,
         draggable: true,
       });
-      return { success: false, message: `Verification failed: ${error.message}` };
+      return { success: false, message: `${error.message}` };
     } else {
       toast.error('Verification failed: Unknown error', {
         position: "bottom-left",
