@@ -33,7 +33,7 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
     const articlesToInsert = articles.map(article => ({
       id: uuidv4(),
       title: article.title,
-      description: article.description,
+      description: article.description || null, 
       author: article.author,
       urlToImage: article.urlToImage || null,
       publishedAt: article.publishedAt,
@@ -82,7 +82,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
     const articlesToInsert = Array.from(uniqueArticles.values()).map((article) => ({
       id: article.id,
       title: article.title,
-      description: article.description || '',
+      description: article.description || null, 
       author: article.author,
       urlToImage: article.urlToImage,
       publishedAt: article.publishedAt,

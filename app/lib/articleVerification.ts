@@ -8,11 +8,11 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 import { SystemProgram, Transaction, PublicKey, Connection, clusterApiUrl } from '@solana/web3.js';
 import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Buffer } from 'buffer';
-import { AnchorError } from '@project-serum/anchor';
+import { toast } from 'react-toastify';
 
-// USDC token mint address (your devnet USDC token)
+// USDC token mint address (devnet USDC token)
 const USDC_TEST_TOKEN_MINT_ADDRESS = new PublicKey('5ruoovCtJDSuQcrUU3LQ4yMZuSAVBGCc6885Qh6P2Vz9');
-const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'); // Correct SPL Token Program ID
+const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'); 
 
 // Initialize ed25519 hashing
 console.log('Initializing ed.etc.sha512Sync');
@@ -49,7 +49,7 @@ async function getOrCreateEscrowTokenAccount(connection: Connection, wallet: Wal
     escrowAuthorityPDA,
     true,
     SPL_TOKEN_PROGRAM_ID,
-    ASSOCIATED_TOKEN_PROGRAM_ID // Using the correct Associated Token Account Program ID
+    ASSOCIATED_TOKEN_PROGRAM_ID 
   );
 
   console.log('Associated Token Address:', associatedTokenAddress.toBase58());
@@ -65,7 +65,7 @@ async function getOrCreateEscrowTokenAccount(connection: Connection, wallet: Wal
       associatedTokenAddress,
       escrowAuthorityPDA,
       USDC_TEST_TOKEN_MINT_ADDRESS,
-      SPL_TOKEN_PROGRAM_ID, // Correct SPL Token Program ID
+      SPL_TOKEN_PROGRAM_ID, 
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
     transaction.add(createATAIx);
@@ -107,7 +107,7 @@ async function submitAndVerifyArticle(
 
     console.log('Content Hash Buffer:', contentHashBuffer.toString('hex'));
 
-    const [contentPDA ] = PublicKey.findProgramAddressSync(
+    const [contentPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('content'), contentHashBuffer],
       program.programId
     );
@@ -140,13 +140,13 @@ async function submitAndVerifyArticle(
           USDC_TEST_TOKEN_MINT_ADDRESS,
           wallet.publicKey!,
           false,
-          SPL_TOKEN_PROGRAM_ID, // Correct SPL Token Program ID
+          SPL_TOKEN_PROGRAM_ID, 
           ASSOCIATED_TOKEN_PROGRAM_ID
         ),
-        escrowTokenAccount,  // Escrow account to receive USDC
+        escrowTokenAccount,  
         escrowAuthority: escrowAuthorityPDA,
         feePayer: wallet.publicKey!,
-        tokenProgram: SPL_TOKEN_PROGRAM_ID, // Correct SPL Token Program ID
+        tokenProgram: SPL_TOKEN_PROGRAM_ID, 
         systemProgram: SystemProgram.programId,
       })
       .instruction();
@@ -155,8 +155,6 @@ async function submitAndVerifyArticle(
 
     // Add the instruction to the transaction
     tx.add(submitAndVerifyIx);
-
-    // Set the recentBlockhash (fixing recentBlockhash error)
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = wallet.publicKey!;
 
@@ -167,47 +165,48 @@ async function submitAndVerifyArticle(
     console.log('Signing transaction...');
     const signedTx = await wallet.signTransaction(tx);
 
-    console.log('Simulating transaction...');
-    const simulation = await connection.simulateTransaction(signedTx);
-
-    if (simulation.value.err) {
-      console.error('Transaction simulation failed:', simulation.value.err);
-      console.error('Logs:', simulation.value.logs);
-      throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
-    }
-
-    console.log('Transaction simulation successful, sending transaction...');
+    console.log('Sending transaction...');
     const signature = await connection.sendRawTransaction(signedTx.serialize());
     console.log('Transaction sent, signature:', signature);
 
-    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-    console.log('Transaction confirmation:', confirmation);
+    // Retry logic for transaction confirmation
+    let confirmed = false;
+    let attempts = 0;
+    const maxAttempts = 5;
+    while (!confirmed && attempts < maxAttempts) {
+      try {
+        console.log(`Attempt ${attempts + 1}: Confirming transaction...`);
+        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+        console.log('Transaction confirmation:', confirmation);
+        confirmed = true;
+      } catch (error) {
+        console.error('Confirmation attempt failed, retrying...', error);
+        attempts++;
+        if (attempts >= maxAttempts) {
+          throw new Error('Transaction confirmation failed after multiple attempts.');
+        }
+        // Adding a delay between retries (e.g., 5 seconds)
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+    }
+
+    if (!confirmed) {
+      throw new Error(`Transaction was not confirmed. Check signature ${signature} using Solana Explorer or CLI.`);
+    }
 
     return signature;
   } catch (error) {
     console.error('Error in submitAndVerifyArticle:', error);
-
-    if (error instanceof AnchorError) {
-      if (error.error.errorCode.code === 'ContentAlreadyVerified') {
-        console.error('Article has already been verified.');
-        throw new Error('Article has already been verified.');
-      } else {
-        console.error('AnchorError:', error.error.errorMessage);
-        throw error;
-      }
-    } else if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
     throw error;
   }
 }
+
 
 export async function verifyArticle(
   articleSlug: string,
   walletAddress: string,
   signature: string,
-  articleData: { title: string; content: string; sourceUrl: string; author: string; publishedAt: string; urlToImage: string },
+  articleData: { title: string; content: string; sourceUrl: string; author: string; publishedAt: string; urlToImage: string, description: string },
   wallet: WalletContextState
 ): Promise<{ success: boolean; message: string; onChainSignature?: string }> {
   console.log('Starting verifyArticle function with params:', { articleSlug, walletAddress, signature, articleData });
@@ -229,45 +228,103 @@ export async function verifyArticle(
 
     console.log('Preparing verification data for Supabase');
     const verificationData = {
+      slug: articleSlug,
+      title: articleData.title,
+      content: articleData.content,
+      description: articleData.description || '',
+      source_url: articleData.sourceUrl,
+      author: articleData.author,
+      published_at: articleData.publishedAt,
+      url_to_image: articleData.urlToImage,
       verified: true,
       verified_by: walletAddress,
       verified_at: new Date().toISOString(),
       signature: signature,
       content_hash: contentHash,
       on_chain_verification: onChainSignature,
-      author: articleData.author,
-      published_at: articleData.publishedAt,
-      url_to_image: articleData.urlToImage,
-      slug: articleSlug,
-      title: articleData.title,
-      content: articleData.content,
-      source_url: articleData.sourceUrl,
     };
     console.log('Verification data:', verificationData);
 
-    console.log('Updating article in Supabase');
-    const { error: updateError } = await supabase
+    console.log('Upserting article in Supabase');
+    const { error: upsertError } = await supabase
       .from('articles')
-      .upsert(verificationData, {
-        onConflict: 'slug',
-        update: ['verified', 'verified_by', 'verified_at', 'signature', 'content_hash', 'on_chain_verification', 'author', 'published_at', 'url_to_image', 'title', 'content', 'source_url'],
+      .upsert(verificationData, { 
+        onConflict: 'slug' 
       });
 
-    if (updateError) {
-      console.error('Error updating article:', updateError);
-      throw updateError;
+    if (upsertError) {
+      console.error('Error upserting article:', upsertError);
+      throw upsertError;
     }
-    console.log('Article updated successfully');
+    console.log('Article upserted successfully');
 
     return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
     if (error instanceof Error) {
+      if (error.message.includes('custom program error: 0x1772') || 
+          error.message.includes('Content has already been submitted')) {
+        toast.error('Article already submitted', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        return { success: false, message: 'Article already been submitted and verified.' };
+      }
+      if (error.message.includes('custom program error: 0xbc4')) {
+        toast.warning('Please top up USDC', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        return { success: false, message: 'Insufficient USDC balance. Please top up your USDC.' };
+      }
       if (error.message.includes('{"Custom":6002}')) {
+        toast.info('Article already verified on-chain', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
         return { success: false, message: 'Article has already been verified on-chain.' };
       }
+      if (error.message.includes('Error Number: 3012')) {
+        toast.warning('Insufficient USDC balance', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        return { success: false, message: 'Insufficient USDC balance. Please top up.' };
+      }
+      toast.error(`Verification failed: ${error.message}`, {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return { success: false, message: `Verification failed: ${error.message}` };
     } else {
+      toast.error('Verification failed: Unknown error', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return { success: false, message: 'Verification failed: Unknown error' };
     }
   }

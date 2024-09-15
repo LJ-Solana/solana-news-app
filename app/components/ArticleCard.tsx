@@ -110,6 +110,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           content: description,
           sourceUrl: sourceData,
           author,
+          description,
           publishedAt,
           urlToImage: urlToImage || ''
         },

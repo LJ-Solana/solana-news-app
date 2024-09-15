@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface AlertPopupProps {
@@ -10,23 +10,16 @@ interface AlertPopupProps {
 
 const AlertPopup: React.FC<AlertPopupProps> = ({ message, type, onClose }) => {
   React.useEffect(() => {
-    const toastId = toast[type](message, {
-      position: "bottom-left",
+    const toastId = toast(message, {
+      type: type === 'error' ? 'error' : 'success',
       autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
       onClose: onClose,
     });
 
-    return () => {
-      toast.dismiss(toastId);
-    };
+    return () => toast.dismiss(toastId);
   }, [message, type, onClose]);
 
-  return <ToastContainer />;
+  return <ToastContainer position="bottom-left" />;
 };
 
 export default AlertPopup;
