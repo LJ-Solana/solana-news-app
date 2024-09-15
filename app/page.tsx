@@ -8,6 +8,7 @@ import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaCoins, FaChevron
 import WalletButton from './components/WalletButton';
 import { categories } from './lib/serverNewsFetcher';
 import { useNews } from './lib/useNews';
+import USDCBalanceButton from './components/USDCBalanceButton';
 
 export default function Home() {
   const { featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
@@ -50,7 +51,8 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            <USDCBalanceButton />
             <WalletButton />
           </div>
         </div>

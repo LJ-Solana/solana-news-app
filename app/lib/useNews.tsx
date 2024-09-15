@@ -26,18 +26,18 @@ export function useNews() {
       const newsData = await getNews();
       setArticles(newsData as ArticleCardProps[]);
       setFeaturedArticles(newsData.slice(0, 3) as ArticleCardProps[]);
+      setFilteredArticles(newsData as ArticleCardProps[]);
     }
     fetchNews();
   }, []);
 
   useEffect(() => {
-    const featuredIds = new Set(featuredArticles.map(article => article.id));
-    setFilteredArticles(
-      selectedCategory
-        ? articles.filter(article => article.category === selectedCategory)
-        : articles.filter(article => !featuredIds.has(article.id))
-    );
-  }, [articles, selectedCategory, featuredArticles]);
+    if (selectedCategory) {
+      setFilteredArticles(articles.filter(article => article.category === selectedCategory));
+    } else {
+      setFilteredArticles(articles); 
+    }
+  }, [articles, selectedCategory]);
 
   return {
     articles,
