@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaInfoCircle } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
 import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
 import { supabase } from '../lib/supabaseClient';
 import { verifyArticle } from '../lib/articleVerification';
 import AlertPopup from './AlertPopUp';
+import Tooltip from './ToolTip';
 
 export interface ArticleCardProps {
   id: string;
@@ -191,7 +192,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               Read Summary
             </button>
           </Link>
-          <div className="flex space-x-2">
+          <div className="flex space-x-4">
             <button
               onClick={() => setShowSourceDataModal(true)}
               className={`flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm ${
@@ -213,12 +214,25 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
                 </>
               )}
             </button>
-            <button
-              onClick={handleChallenge}
-              className="flex-1 py-1.5 px-3 rounded-md text-red-600 font-medium transition duration-300 bg-red-50 hover:bg-red-100 text-sm"
-            >
-              Challenge
-            </button>
+            {!isVerified ? (
+              <Tooltip content="Article not verified">
+                <button
+                  onClick={handleChallenge}
+                  className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                  disabled
+                >
+                  Challenge
+                  <FaInfoCircle className="inline-block ml-1" />
+                </button>
+              </Tooltip>
+            ) : (
+              <button
+                onClick={handleChallenge}
+                className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-red-50 text-red-600 hover:bg-red-100"
+              >
+                Challenge
+              </button>
+            )}
           </div>
         </div>
       </div>
