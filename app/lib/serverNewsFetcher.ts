@@ -15,11 +15,11 @@ interface NewsArticle {
   source: {
     name: string;
   };
+  url_to_image?: string; 
 }
 
-
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
-  const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=30&apiKey=${NEWS_API_KEY}`;
+  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
     const response = await axios.get<{ articles: NewsArticle[] }>(url);
@@ -29,14 +29,15 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
 
     const articlesToInsert = articles.map(article => ({
       ...article,
-      url_to_image: article.urlToImage // Convert urlToImage to url_to_image
+      url_to_image: article.urlToImage, 
+      urlToImage: undefined 
     }));
 
     const { error } = await supabase
       .from('articles')
       .upsert(articlesToInsert, { 
         onConflict: 'slug',
-        ignoreDuplicates: true
+        ignoreDuplicates: false // Changed to false to update existing entries
       });
 
     if (error) {
@@ -45,7 +46,7 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
       console.log('Articles inserted/updated successfully');
     }
 
-    return articles;
+    return articlesToInsert; // Return the modified articles
   } catch (error) {
     console.error('Error fetching news:', error);
     return [];
@@ -62,7 +63,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       title: article.title,
       description: article.description || '',
       author: article.author || 'Unknown',
-      url_to_image: article.urlToImage || null, 
+      url_to_image: article.url_to_image || article.urlToImage || null,
       publishedAt: article.publishedAt || new Date().toISOString(),
       source: JSON.stringify(article.source),
       verified: false,
@@ -113,6 +114,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
     }));
 
     console.log('Processed articles:', processedArticles.length);
+    console.log('Sample article:', processedArticles[0]); // Log a sample article to check the url_to_image
     return processedArticles;
   } catch (error) {
     console.error("Failed to fetch news:", error);

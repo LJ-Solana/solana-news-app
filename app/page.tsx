@@ -32,28 +32,28 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-4">
-          <div className="relative flex-grow mr-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">
+          <div className="relative w-full sm:w-auto sm:flex-grow sm:mr-4">
             <button 
               onClick={toggleActions}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md"
             >
-              <span className="font-semibold text-lg">Actions</span>
+              <span className="font-semibold text-base sm:text-lg">Actions</span>
               <FaChevronDown className={`ml-2 transition-transform duration-300 ${isActionsOpen ? 'transform rotate-180' : ''}`} />
             </button>
             <div className={`absolute top-full left-0 right-0 bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${isActionsOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <Link href="/verify-articles" className=" w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 transition duration-300 flex items-center">
-                <FaUserCheck className="mr-3 text-xl" /> <span className="font-medium">Become a Verifier</span>
+              <Link href="/verify-articles" className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
+                <FaUserCheck className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Become a Verifier</span>
               </Link>
-              <Link href="/buy-tokens" className=" w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 transition duration-300 flex items-center">
-                <FaCoins className="mr-3 text-xl" /> <span className="font-medium">Buy Tokens</span>
+              <Link href="/buy-tokens" className="w-full bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
+                <FaCoins className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Buy Tokens</span>
               </Link>
-              <Link href="/leaderboard" className=" w-full bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 transition duration-300 flex items-center">
-                <FaTrophy className="mr-3 text-xl" /> <span className="font-medium">Leaderboard</span>
+              <Link href="/leaderboard" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
+                <FaTrophy className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Leaderboard</span>
               </Link>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-end">
             <USDCBalanceButton />
             <WalletButton />
           </div>

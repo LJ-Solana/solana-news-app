@@ -50,6 +50,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const wallet = useWallet();
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const fetchVerificationStatus = useCallback(async () => {
     try {
@@ -143,11 +144,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         <Link href={`/article/${slug}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
-              src={url_to_image || '/placeholder-image.png'}
+              src={!imageError && url_to_image ? url_to_image : '/placeholder-image.png'}
               alt={title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ objectFit: 'cover' }}
+              onError={() => setImageError(true)}
             />
           </div>
           <div className="p-4 space-y-3 flex-grow">
