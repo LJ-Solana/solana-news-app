@@ -215,15 +215,19 @@ export async function verifyArticle(
     }
     console.log('Wallet public key:', wallet.publicKey.toBase58());
 
+    // Step 1: On-chain verification
+    console.log('Starting on-chain verification');
     const contentHash = generateContentHash(articleData);
-
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
       true, 
       true, 
       wallet
     );
+    console.log('On-chain verification completed:', onChainSignature);
 
+    // Step 2: Database update
+    console.log('Starting database update');
     const verificationData = {
       slug: articleSlug,
       verified: true,
