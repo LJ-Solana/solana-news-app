@@ -19,7 +19,7 @@ interface NewsArticle {
 }
 
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
-  const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=30&apiKey=${NEWS_API_KEY}`;
+  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
     const response = await axios.get<{ articles: NewsArticle[] }>(url);

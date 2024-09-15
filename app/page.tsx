@@ -36,7 +36,7 @@ export default function Home() {
           <div className="relative w-full sm:w-auto sm:flex-grow sm:mr-4">
             <button 
               onClick={toggleActions}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md relative z-50"
             >
               <span className="font-semibold text-base sm:text-lg">Actions</span>
               <FaChevronDown className={`ml-2 transition-transform duration-300 ${isActionsOpen ? 'transform rotate-180' : ''}`} />
