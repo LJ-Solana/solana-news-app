@@ -35,7 +35,7 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
       title: article.title,
       description: article.description || null, 
       author: article.author,
-      urlToImage: article.urlToImage || null,
+      url_to_image: article.urlToImage || null,  // Change this line
       publishedAt: article.publishedAt,
       source: JSON.stringify(article.source), 
       verified: false,
@@ -65,6 +65,7 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
 
 export async function getNews(): Promise<ArticleCardProps[]> {
   try {
+    // Fetch new articles from API
     const newsArticles = await fetchNewsFromAPI();
     
     const uniqueArticles = new Map<string, ArticleWithId>();
@@ -84,7 +85,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       title: article.title,
       description: article.description || null, 
       author: article.author,
-      urlToImage: article.urlToImage,
+      url_to_image: article.urlToImage,  // Change this line
       publishedAt: article.publishedAt,
       source: article.source,
       verified: false,
@@ -92,6 +93,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       category: categorizeArticle(article.title, article.description || ''),
     }));
 
+    // Upsert new articles
     const { error: insertError } = await supabase
       .from('articles')
       .upsert(articlesToInsert, { 
@@ -103,32 +105,34 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       console.error("Error inserting/updating articles:", insertError);
     }
 
-    // Fetch verified articles
-    const { data: verifiedArticles, error: verifiedError } = await supabase
+    // Fetch all articles, including verified ones
+    const { data: allArticles, error: fetchError } = await supabase
       .from('articles')
-      .select('id, verifier')
-      .in('id', articlesToInsert.map((a) => a.id));
+      .select('*')
+      .order('publishedAt', { ascending: false });
 
-    if (verifiedError) {
-      console.error("Error fetching verified articles:", verifiedError);
+    if (fetchError) {
+      console.error("Error fetching all articles:", fetchError);
+      return [];
     }
-    const verifiedMap = new Map(verifiedArticles?.map(a => [a.id, a.verifier]) || []);
-    const processedArticles: ArticleCardProps[] = articlesToInsert.map((article) => {
-      const category = categorizeArticle(article.title, article.description || '');
-      const slug = slugify(article.title);
+
+    const processedArticles: ArticleCardProps[] = allArticles.map((article) => {
+      const category = article.category || categorizeArticle(article.title, article.description || '');
       return {
         id: article.id,
         title: article.title,
         author: article.author,
         publishedAt: article.publishedAt,
-        source:article.source,
+        source: typeof article.source === 'string' 
+          ? JSON.parse(article.source) 
+          : (article.source || { name: 'Unknown' }),
         description: article.description || '',
-        slug,
-        verifiedBy: verifiedMap.get(article.id) || null,
+        slug: article.slug,
+        verifiedBy: article.verified_by || null,
         category,
         icon: categories[category as keyof typeof categories] || '📰',
-        summary: '',
-        urlToImage: article.urlToImage || null,
+        summary: article.summary || '',
+        urlToImage: article.url_to_image || null,  // Change this line
       };
     });
 
@@ -161,7 +165,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleCardProps |
     source: typeof article.source === 'string' ? JSON.parse(article.source) : article.source,
     category: article.category,
     icon: categories[article.category as keyof typeof categories] || '📰',
-    urlToImage: article.urlToImage || null,
+    urlToImage: article.url_to_image || null,  // Change this line
     verifiedBy: article.verifier || null,
     summary: article.summary || '',
   };

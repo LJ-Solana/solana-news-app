@@ -132,6 +132,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   };
 
+  const handleChallenge = () => {
+    // TODO: Implement challenge functionality
+    console.log('Challenge button clicked');
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-200 flex flex-col h-full">
@@ -154,7 +159,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
             <div className="text-xs text-gray-600 flex items-center justify-between">
-              <span>Source: {source.name}</span>
+              <span>Source: {source && typeof source === 'object' && 'name' in source ? source.name : 'Unknown'}</span>
               <span>{icon} {category}</span>
             </div>
             <div className="text-xs flex justify-between mt-2">
@@ -180,21 +185,29 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             </div>
           </div>
         </Link>
-        <div className="px-4 pb-4 mt-auto flex space-x-2">
-          <button
-            onClick={() => setShowSourceDataModal(true)}
-            className={`flex-1 py-2 rounded-md text-white font-semibold transition duration-300 ${
-              isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
-            }`}
-            disabled={isVerified || isVerifying}
-          >
-            {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify Article'}
-          </button>
-          <Link href={`/article/${id}`} className="flex-1">
-            <button className="w-full py-2 rounded-md text-white font-semibold transition duration-300 bg-purple-500 hover:bg-purple-600">
+        <div className="px-4 pb-4 mt-auto flex flex-col space-y-2">
+          <Link href={`/article/${id}`} className="w-full">
+            <button className="w-full py-3 rounded-md text-white font-semibold transition duration-300 bg-purple-500 hover:bg-purple-600 text-lg">
               Read Summary
             </button>
           </Link>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowSourceDataModal(true)}
+              className={`flex-1 py-2 px-3 rounded-md text-white font-semibold transition duration-300 text-sm ${
+                isVerified ? 'bg-green-500 cursor-not-allowed' : isVerifying ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+              disabled={isVerified || isVerifying}
+            >
+              {isVerified ? 'Verified' : isVerifying ? 'Verifying...' : 'Verify'}
+            </button>
+            <button
+              onClick={handleChallenge}
+              className="flex-1 py-2 px-3 rounded-md text-white font-semibold transition duration-300 bg-red-500 hover:bg-red-600 text-sm"
+            >
+              Challenge
+            </button>
+          </div>
         </div>
       </div>
       {showSourceDataModal && (
