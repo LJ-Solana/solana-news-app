@@ -9,6 +9,9 @@ import RateContributionModal from '../components/RateContributionModal';
 import { supabase } from '../lib/supabaseClient';
 import { verifyArticle } from '../lib/articleVerification';
 import AlertPopup from './AlertPopUp';
+import { queryContentRatings } from '../lib/queryContentRatings';
+import { getPDAFromContentHash, generateContentHash } from '../lib/articleVerification';
+import { getProgram } from '../lib/solanaClient';
 
 export interface ArticleCardProps {
   id: string;
@@ -54,7 +57,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [imageError, setImageError] = useState(false);
-  const [rating, setRating] = useState(3); 
+  const [rating, setRating] = useState<number | null>(null); 
 
   const fetchVerificationStatus = useCallback(async () => {
     try {
@@ -138,6 +141,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   };
 
   const renderStars = () => {
+    if (rating === null) {
+      return <span className="text-gray-500 text-xs">Not Verified</span>;
+    }
     return Array(5).fill(0).map((_, index) => (
       <FaStar 
         key={index} 
@@ -145,6 +151,25 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       />
     ));
   };
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      if (wallet.connected && wallet.publicKey) {
+        const program = getProgram();
+        const contentHash = generateContentHash({ title, content: description });
+        const contentPDA = getPDAFromContentHash(contentHash);
+        try {
+          const { averageRating } = await queryContentRatings(program, contentPDA);
+          setRating(averageRating);
+        } catch (error) {
+          console.error('Error fetching rating:', error);
+          setRating(null);
+        }
+      }
+    };
+
+    fetchRatings();
+  }, [wallet.connected, wallet.publicKey, title, description]);
 
   return (
     <>
@@ -168,7 +193,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-gray-600">Chain Score:</span>
+              <span className="text-xs text-gray-600">On-Chain Score:</span>
               <div className="flex items-center">
                 {renderStars()}
               </div>
