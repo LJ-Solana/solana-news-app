@@ -248,8 +248,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
                 'Verifying...'
               ) : (
                 <>
-                  <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block mr-1" />
-                  Verify 0.1
+                  Contribute 0.1
+                  <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block ml-1 align-text-bottom" />
                 </>
               )}
             </button>
