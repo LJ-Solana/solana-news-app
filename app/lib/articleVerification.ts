@@ -210,6 +210,7 @@ export async function verifyArticle(
 ): Promise<{ success: boolean; message: string; onChainSignature?: string }> {
   console.log('Starting verifyArticle function with params:', { articleSlug, walletAddress, signature, articleData });
   try {
+    // Ensure wallet is connected and has a public key
     if (!wallet.publicKey) {
       throw new Error('Wallet is not connected or missing public key');
     }
@@ -265,7 +266,9 @@ export async function verifyArticle(
     return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
+    
     if (error instanceof Error) {
+      // Handling custom program error codes for on-chain verification
       if (error.message.includes('custom program error: 0x1772') || 
           error.message.includes('Content has already been submitted')) {
         toast.error('Article already submitted', {
@@ -311,6 +314,8 @@ export async function verifyArticle(
         });
         return { success: false, message: 'Insufficient USDC balance. Please top up.' };
       }
+
+      // Generic error handling
       toast.error(`${error.message}`, {
         position: "bottom-left",
         autoClose: 5000,
@@ -321,6 +326,7 @@ export async function verifyArticle(
       });
       return { success: false, message: `${error.message}` };
     } else {
+      // Unknown error case
       toast.error('Verification failed: Unknown error', {
         position: "bottom-left",
         autoClose: 5000,

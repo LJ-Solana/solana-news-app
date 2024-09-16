@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaStar } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
 import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
@@ -133,7 +133,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   };
 
-  const handleChallenge = () => {
+  const handleRateContribution = () => {
     // TODO: Implement challenge functionality
     console.log('Challenge button clicked');
   };
@@ -217,20 +217,21 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             {!isVerified ? (
               <Tooltip content="Article not verified">
                 <button
-                  onClick={handleChallenge}
-                  className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                  onClick={handleRateContribution}
+                  className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-gray-100 text-gray-400 cursor-not-allowed flex items-center justify-center"
                   disabled
                 >
-                  Challenge
-                  <FaInfoCircle className="inline-block ml-1" />
+                  <FaStar className="mr-1" />
+                  <span>Rate Contribution</span>
                 </button>
               </Tooltip>
             ) : (
               <button
-                onClick={handleChallenge}
-                className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-red-50 text-red-600 hover:bg-red-100"
+                onClick={handleRateContribution}
+                className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-yellow-50 text-yellow-600 hover:bg-yellow-100 flex items-center justify-center"
               >
-                Challenge
+                <FaStar className="mr-1" />
+                <span>Rate Contribution</span>
               </button>
             )}
           </div>

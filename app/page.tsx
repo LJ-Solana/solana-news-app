@@ -27,7 +27,7 @@ export default function Home() {
     ? filteredArticles.filter(article => article.verifiedBy != null)
     : filteredArticles;
 
-  console.log('Total articles:', articles.length); // Add this line for debugging
+  console.log('Total articles:', articles.length); 
 
   return (
     <div className="bg-gradient-to-b from-gray-100 to-gray-200 min-h-screen">
