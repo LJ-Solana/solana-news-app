@@ -5,10 +5,10 @@ import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaStar } from 'react-
 import { useWallet } from '@solana/wallet-adapter-react';
 import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
+import RateContributionModal from '../components/RateContributionModal';
 import { supabase } from '../lib/supabaseClient';
 import { verifyArticle } from '../lib/articleVerification';
 import AlertPopup from './AlertPopUp';
-import Tooltip from './ToolTip';
 
 export interface ArticleCardProps {
   id: string;
@@ -27,6 +27,7 @@ export interface ArticleCardProps {
   featured?: boolean;
   verifiedBy?: string;
   summary?: string;
+  source_url: string;
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ 
@@ -39,6 +40,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   category, 
   icon, 
   url_to_image,
+  source_url,
   featured = false,
 }) => {
   const [isVerified, setIsVerified] = useState(false);
@@ -46,11 +48,13 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [signature, setSignature] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showSourceDataModal, setShowSourceDataModal] = useState(false);
+  const [showRateContributionModal, setShowRateContributionModal] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [rating, setRating] = useState(3); 
 
   const fetchVerificationStatus = useCallback(async () => {
     try {
@@ -133,9 +137,13 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   };
 
-  const handleRateContribution = () => {
-    // TODO: Implement challenge functionality
-    console.log('Challenge button clicked');
+  const renderStars = () => {
+    return Array(5).fill(0).map((_, index) => (
+      <FaStar 
+        key={index} 
+        className={`text-xl ${index < rating ? 'text-yellow-400' : 'text-gray-300'}`} 
+      />
+    ));
   };
 
   return (
@@ -158,6 +166,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             <div className="flex justify-between items-center text-xs text-gray-500">
               <span className="flex items-center"><FaUser className="mr-1" /> {author}</span>
               <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-gray-600">Chain Score:</span>
+              <div className="flex items-center">
+                {renderStars()}
+              </div>
             </div>
             <div className="text-xs text-gray-600 flex items-center justify-between">
               <span>Source: {source && typeof source === 'object' && 'name' in source ? source.name : 'Unknown'}</span>
@@ -209,25 +223,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
                 'Verifying...'
               ) : (
                 <>
-                  <Image src="/usdc-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block mr-1" />
-                  Verify ($5)
+                  <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block mr-1" />
+                  Verify 0.1
                 </>
               )}
             </button>
-            {!isVerified ? (
-              <Tooltip content="Article not verified">
-                <button
-                  onClick={handleRateContribution}
-                  className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-gray-100 text-gray-400 cursor-not-allowed flex items-center justify-center"
-                  disabled
-                >
-                  <FaStar className="mr-1" />
-                  <span>Rate Contribution</span>
-                </button>
-              </Tooltip>
-            ) : (
+            {isVerified && (
               <button
-                onClick={handleRateContribution}
+                onClick={() => setShowRateContributionModal(true)}
                 className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-yellow-50 text-yellow-600 hover:bg-yellow-100 flex items-center justify-center"
               >
                 <FaStar className="mr-1" />
@@ -254,6 +257,16 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           verifier={verifier || ''}
           signature={signature || ''}
           onChainVerification={onChainVerification || ''}
+        />
+      )}
+      {showRateContributionModal && (
+        <RateContributionModal
+          isVisible={showRateContributionModal}
+          onClose={() => setShowRateContributionModal(false)}
+          articleTitle={title}
+          articleDescription={description}
+          articleSource={source}
+          articleSourceUrl={source_url}
         />
       )}
       {alert && (

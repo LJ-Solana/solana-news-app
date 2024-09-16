@@ -29,8 +29,9 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
 
     const articlesToInsert = articles.map(article => ({
       ...article,
-      url_to_image: article.urlToImage, 
-      urlToImage: undefined 
+      url_to_image: article.urlToImage, // Convert urlToImage to url_to_image
+      urlToImage: undefined, // Remove the original urlToImage field
+      source: JSON.stringify(article.source) // Ensure source is properly formatted as JSON
     }));
 
     const { error } = await supabase
@@ -46,7 +47,14 @@ export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
       console.log('Articles inserted/updated successfully');
     }
 
-    return articlesToInsert; // Return the modified articles
+    // Convert the articlesToInsert to match the NewsArticle interface
+    const formattedArticles: NewsArticle[] = articlesToInsert.map(article => ({
+      ...article,
+      source: JSON.parse(article.source as string) as { name: string },
+      urlToImage: article.url_to_image
+    }));
+
+    return formattedArticles;
   } catch (error) {
     console.error('Error fetching news:', error);
     return [];
@@ -104,6 +112,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       source: typeof article.source === 'string' 
         ? JSON.parse(article.source) 
         : (article.source || { name: 'Unknown' }),
+      source_url: article.source_url || null,
       description: article.description || '',
       slug: article.slug,
       verifiedBy: article.verified_by || null,
@@ -149,6 +158,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleCardProps |
     category: data.category,
     icon: categories[data.category as keyof typeof categories] || '📰',
     url_to_image: data.url_to_image,
+    source_url: data.source_url,
     verifiedBy: data.verified_by,
     summary: data.summary,
   };
