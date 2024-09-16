@@ -64,6 +64,38 @@ export type NewsContent = {
           }
         }
       ]
+    },
+    {
+      "name": "rateContent",
+      "accounts": [
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rater",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "contentHash",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "rating",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -109,6 +141,44 @@ export type NewsContent = {
           {
             "name": "verifierStakeAmount",
             "type": "u64"
+          },
+          {
+            "name": "totalRatings",
+            "type": "u64"
+          },
+          {
+            "name": "sumOfRatings",
+            "type": "u64"
+          },
+          {
+            "name": "ratings",
+            "type": {
+              "vec": {
+                "defined": "Rating"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Rating",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rater",
+            "type": "publicKey"
+          },
+          {
+            "name": "rating",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -144,6 +214,36 @@ export type NewsContent = {
       "code": 6005,
       "name": "InvalidEscrowAuthority",
       "msg": "Escrow token account owner is not the escrow authority."
+    },
+    {
+      "code": 6006,
+      "name": "ContentNotVerified",
+      "msg": "Content has not been verified yet."
+    },
+    {
+      "code": 6007,
+      "name": "InvalidRating",
+      "msg": "Invalid rating. Must be between 1 and 5."
+    },
+    {
+      "code": 6008,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow occurred"
+    },
+    {
+      "code": 6009,
+      "name": "MaxRatingsReached",
+      "msg": "Maximum number of ratings reached for this content"
+    },
+    {
+      "code": 6010,
+      "name": "ContentHashMismatch",
+      "msg": "Content hash mismatch"
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyRated",
+      "msg": "User has already rated this content"
     }
   ]
 };
@@ -214,6 +314,38 @@ export const IDL: NewsContent = {
           }
         }
       ]
+    },
+    {
+      "name": "rateContent",
+      "accounts": [
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rater",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "contentHash",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "rating",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -259,6 +391,44 @@ export const IDL: NewsContent = {
           {
             "name": "verifierStakeAmount",
             "type": "u64"
+          },
+          {
+            "name": "totalRatings",
+            "type": "u64"
+          },
+          {
+            "name": "sumOfRatings",
+            "type": "u64"
+          },
+          {
+            "name": "ratings",
+            "type": {
+              "vec": {
+                "defined": "Rating"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Rating",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "rater",
+            "type": "publicKey"
+          },
+          {
+            "name": "rating",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -294,6 +464,36 @@ export const IDL: NewsContent = {
       "code": 6005,
       "name": "InvalidEscrowAuthority",
       "msg": "Escrow token account owner is not the escrow authority."
+    },
+    {
+      "code": 6006,
+      "name": "ContentNotVerified",
+      "msg": "Content has not been verified yet."
+    },
+    {
+      "code": 6007,
+      "name": "InvalidRating",
+      "msg": "Invalid rating. Must be between 1 and 5."
+    },
+    {
+      "code": 6008,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow occurred"
+    },
+    {
+      "code": 6009,
+      "name": "MaxRatingsReached",
+      "msg": "Maximum number of ratings reached for this content"
+    },
+    {
+      "code": 6010,
+      "name": "ContentHashMismatch",
+      "msg": "Content hash mismatch"
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyRated",
+      "msg": "User has already rated this content"
     }
   ]
 };

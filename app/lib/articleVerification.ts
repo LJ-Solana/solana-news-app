@@ -19,7 +19,7 @@ console.log('Initializing ed.etc.sha512Sync');
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 // Function to generate content hash
-function generateContentHash(articleData: { title: string; content: string }): string {
+export function generateContentHash(articleData: { title: string; content: string }): string {
   console.log('Generating content hash for:', articleData);
   const contentString = `${articleData.title}|${articleData.content}`;
   const hash = sha256(contentString);
@@ -151,7 +151,7 @@ async function submitAndVerifyArticle(
       })
       .instruction();
 
-    console.log('Instruction:', submitAndVerifyIx);
+    console.log('Instruction accounts:', submitAndVerifyIx.keys.map(k => k.pubkey.toBase58()));
 
     // Add the instruction to the transaction
     tx.add(submitAndVerifyIx);
@@ -237,7 +237,6 @@ export async function verifyArticle(
       title: articleData.title,
       description: articleData.description || '',
       published_at: articleData.publishedAt,
-      source: articleData.sourceUrl || '',
       url_to_image: articleData.urlToImage || null,
       on_chain_verification: onChainSignature,
       content_hash: contentHash,

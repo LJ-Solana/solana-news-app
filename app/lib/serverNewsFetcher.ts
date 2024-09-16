@@ -123,7 +123,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
     }));
 
     console.log('Processed articles:', processedArticles.length);
-    console.log('Sample article:', processedArticles[0]); // Log a sample article to check the url_to_image
+    console.log('Sample article:', processedArticles[0]);
     return processedArticles;
   } catch (error) {
     console.error("Failed to fetch news:", error);

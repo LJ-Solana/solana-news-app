@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes, FaInfoCircle, FaStar } from 'react-icons/fa';
 import { supabase } from '../lib/supabaseClient';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { rateContent } from '../lib/rateVerification';
+import { getProgram } from '../lib/solanaClient';
+
 
 interface RateContributionModalProps {
   isVisible: boolean;
@@ -18,11 +22,10 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
   isVisible,
   onClose,
   articleTitle,
-  articleSource,
 }) => {
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
+  const wallet = useWallet();
 
   useEffect(() => {
     const fetchSourceUrl = async () => {
@@ -44,11 +47,22 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
 
   if (!isVisible) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement rating submission logic
-    console.log('Rating:', rating, 'Comment:', comment);
-    onClose();
+    const program = getProgram();
+    if (!wallet || !program) {
+      console.error('Wallet not connected or program not initialized');
+      return;
+    }
+    try {
+      await rateContent(program, { title: articleTitle, content: '' }, rating, wallet);
+      console.log('Rating submitted successfully');
+      // TODO: Handle successful submission (e.g., show a success message)
+      onClose();
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      // TODO: Handle error (e.g., show an error message to the user)
+    }
   };
 
   return (
@@ -70,10 +84,12 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
           Please rate the quality and accuracy of this contributions source&apos;s.
         </p>
         <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 sm:p-6 mb-3 sm:mb-6 rounded-r">
-          <p className="font-bold text-base sm:text-lg mb-2 sm:mb-3">Note: {articleSource.name}</p>
+          <p className="font-bold text-base sm:text-lg mb-2 sm:mb-3">Contribution:</p>
           {sourceUrl && (
-            <p className="text-sm sm:text-base">
-             {sourceUrl}
+            <p className="text-sm sm:text-base break-words overflow-hidden">
+              <p className="text-blue-600">
+                {sourceUrl}
+              </p>
             </p>
           )}
         </div>
@@ -89,13 +105,6 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
               />
             ))}
           </div>
-          <textarea
-            className="w-full p-2 sm:p-4 border rounded-lg mb-2 sm:mb-4 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm sm:text-base"
-            rows={6}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Add a comment about this source's contribution (optional)"
-          />
           <div className="flex justify-end space-x-2 sm:space-x-4">
             <button
               type="button"
