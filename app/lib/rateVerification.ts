@@ -1,13 +1,13 @@
 import { WalletContextState } from '@solana/wallet-adapter-react';
-import { web3, BN } from '@project-serum/anchor';
+import { web3 } from '@project-serum/anchor';
 import { supabase } from './supabaseClient';
 import { PublicKey } from '@solana/web3.js';
+import { toast } from 'react-toastify'; 
+import { getProgram } from './solanaClient';
 
-export const rateContent = async (program: any, articleData: { title: string; content: string }, rating: number, wallet: WalletContextState) => {
-  console.log('Starting rateContent function');
-  console.log('Article data:', articleData);
+export const rateContent = async (articleData: { title: string; content: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
-
+  const program = getProgram();
   const publicKey = wallet.publicKey;
   const signTransaction = wallet.signTransaction;
 
@@ -17,6 +17,25 @@ export const rateContent = async (program: any, articleData: { title: string; co
     console.error('Wallet not connected');
     throw new Error("Wallet not connected");
   }
+
+  if (!program) {
+    console.error('Failed to get program');
+    throw new Error("Failed to get program");
+  }
+
+  console.log('Program ID:', program.programId.toString());
+  console.log('Program methods:', Object.keys(program.methods));
+  console.log('Program accounts:', Object.keys(program.account));
+  console.log('Full program.account object:', program.account);
+
+  // Check for both 'Content' and 'content'
+  if (!program.account.Content && !program.account.content) {
+    console.error('Content account not found in program');
+    throw new Error("Content account not found in program");
+  }
+
+  // Use the correct property based on what's available
+  const ContentAccount = program.account.Content || program.account.content;
 
   if (rating < 1 || rating > 5) {
     console.error('Invalid rating:', rating);
@@ -53,44 +72,53 @@ export const rateContent = async (program: any, articleData: { title: string; co
   console.log('Content PDA for rating:', contentPDA.toBase58());
 
   try {
-    console.log('Checking if content account exists');
-    const contentAccount = await program.account.content.fetchNullable(contentPDA);
+    console.log('Fetching content account');
+    const contentAccount = await ContentAccount.fetchNullable(contentPDA);
+    
+    if (contentAccount) {
+      console.log('Content account exists:', contentAccount);
+      console.log('Creating transaction for rating content');
+      const tx = await program.methods.rateContent(Array.from(contentHash), rating)
+        .accounts({
+          content: contentPDA,
+          rater: publicKey,
+          systemProgram: web3.SystemProgram.programId,
+        })
+        .transaction();
 
-    if (!contentAccount) {
-      console.error('Content account does not exist. It should have been created during article verification.');
-      throw new Error('Content account not found. The article may not have been properly verified.');
+      console.log('Getting latest blockhash');
+      tx.recentBlockhash = (await program.provider.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = publicKey;
+
+      const signedTx = await signTransaction(tx);
+      console.log('Transaction signed');
+
+      const txid = await program.provider.connection.sendRawTransaction(signedTx.serialize());
+      console.log('Transaction sent, ID:', txid);
+
+      console.log('Confirming transaction');
+      await program.provider.connection.confirmTransaction(txid);
+
+      console.log("Rating submitted successfully. Transaction signature", txid);
+      toast.success('Rating submitted successfully', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      return txid;
+    } else {
+      console.log('Content account does not exist');
+      throw new Error('Content account does not exist');
     }
-
-    console.log('Content account exists, proceeding with rating');
-
-    console.log('Creating transaction for rating content');
-    const tx = await program.methods.rateContent(contentHash, new BN(rating))
-      .accounts({
-        content: contentPDA,
-        rater: publicKey,
-        systemProgram: web3.SystemProgram.programId,
-      })
-      .transaction();
-
-    console.log('Getting latest blockhash');
-    tx.recentBlockhash = (await program.provider.connection.getLatestBlockhash()).blockhash;
-    tx.feePayer = publicKey;
-
-    const signedTx = await signTransaction(tx);
-    console.log('Transaction signed');
-
-    const txid = await program.provider.connection.sendRawTransaction(signedTx.serialize());
-    console.log('Transaction sent, ID:', txid);
-
-    console.log('Confirming transaction');
-    await program.provider.connection.confirmTransaction(txid);
-
-    console.log("Rating submitted successfully. Transaction signature", txid);
-    return txid;
   } catch (error) {
-    console.error("Error submitting rating:", error);
-    if (error instanceof Error && 'logs' in error) {
-      console.error("Transaction logs:", (error as any).logs);
+    console.error("Error fetching or processing content account:", error);
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
     }
     throw error;
   }

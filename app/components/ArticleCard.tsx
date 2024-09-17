@@ -12,6 +12,8 @@ import AlertPopup from './AlertPopUp';
 import { queryContentRatings } from '../lib/queryContentRatings';
 import { getPDAFromContentHash, generateContentHash } from '../lib/articleVerification';
 import { getProgram } from '../lib/solanaClient';
+import { Program, Idl } from '@project-serum/anchor';
+
 
 export interface ArticleCardProps {
   id: string;
@@ -31,6 +33,7 @@ export interface ArticleCardProps {
   verifiedBy?: string;
   summary?: string;
   source_url: string;
+  onChainVerification: string;
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ 
@@ -140,9 +143,38 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   };
 
+ 
+  useEffect(() => {
+    const fetchRatings = async () => {
+      if (wallet.connected && wallet.publicKey && onChainVerification) {
+        const program = getProgram();
+        if (!program) {
+          console.error('Failed to get program');
+          return;
+        }
+        const contentHash = generateContentHash({ title, content: description });
+        const contentPDA = getPDAFromContentHash(contentHash);
+        try {
+          const { averageRating } = await queryContentRatings(program as unknown as Program<Idl>, contentPDA);
+          setRating(averageRating);
+        } catch (error) {
+          console.error('Error fetching rating:', error);
+          setRating(null);
+        }
+      } else {
+        setRating(null);
+      }
+    };
+
+    fetchRatings();
+  }, [wallet.connected, wallet.publicKey, onChainVerification, title, description]);
+
   const renderStars = () => {
+    if (!onChainVerification) {
+      return <span className="text-gray-500 text-xs">Not Verified On-Chain</span>;
+    }
     if (rating === null) {
-      return <span className="text-gray-500 text-xs">Not Verified</span>;
+      return <span className="text-gray-500 text-xs">No Ratings Yet</span>;
     }
     return Array(5).fill(0).map((_, index) => (
       <FaStar 
@@ -151,25 +183,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       />
     ));
   };
-
-  useEffect(() => {
-    const fetchRatings = async () => {
-      if (wallet.connected && wallet.publicKey) {
-        const program = getProgram();
-        const contentHash = generateContentHash({ title, content: description });
-        const contentPDA = getPDAFromContentHash(contentHash);
-        try {
-          const { averageRating } = await queryContentRatings(program, contentPDA);
-          setRating(averageRating);
-        } catch (error) {
-          console.error('Error fetching rating:', error);
-          setRating(null);
-        }
-      }
-    };
-
-    fetchRatings();
-  }, [wallet.connected, wallet.publicKey, title, description]);
 
   return (
     <>
@@ -193,7 +206,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-gray-600">On-Chain Score:</span>
+              <span className="text-xs text-gray-600">⛓️ On-Chain Score: </span>
               <div className="flex items-center">
                 {renderStars()}
               </div>

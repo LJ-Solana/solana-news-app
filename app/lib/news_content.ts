@@ -100,7 +100,7 @@ export type NewsContent = {
   ],
   "accounts": [
     {
-      "name": "Content",
+      "name": "content",
       "type": {
         "kind": "struct",
         "fields": [

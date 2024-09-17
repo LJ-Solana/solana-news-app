@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import ArticleCard from './components/ArticleCard';
-import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaCoins, FaChevronDown, FaCheckCircle } from 'react-icons/fa';
+import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaChevronDown, FaCheckCircle } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
 import { categories } from './lib/serverNewsFetcher';
 import { useNews } from './lib/useNews';
@@ -44,9 +44,6 @@ export default function Home() {
             <div className={`absolute top-full left-0 right-0 bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${isActionsOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <Link href="/verify-articles" className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
                 <FaUserCheck className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Become a Verifier</span>
-              </Link>
-              <Link href="/buy-tokens" className="w-full bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
-                <FaCoins className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Buy Tokens</span>
               </Link>
               <Link href="/leaderboard" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
                 <FaTrophy className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Leaderboard</span>

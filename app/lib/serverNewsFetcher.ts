@@ -19,7 +19,7 @@ interface NewsArticle {
 }
 
 export async function fetchNewsFromAPI(): Promise<NewsArticle[]> {
-  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=30&apiKey=${NEWS_API_KEY}`;
+  const url = `https://newsapi.org/v2/top-headlines?country=gb&pageSize=30&apiKey=${NEWS_API_KEY}`;
   
   try {
     const response = await axios.get<{ articles: NewsArticle[] }>(url);
@@ -120,6 +120,7 @@ export async function getNews(): Promise<ArticleCardProps[]> {
       icon: categories[article.category as keyof typeof categories] || '📰',
       summary: article.summary || '',
       url_to_image: article.url_to_image || null,
+      onChainVerification: article.onChainVerification || null,
     }));
 
     console.log('Processed articles:', processedArticles.length);
@@ -161,6 +162,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleCardProps |
     source_url: data.source_url,
     verifiedBy: data.verified_by,
     summary: data.summary,
+    onChainVerification: data.onChainVerification || null,
   };
 }
 
