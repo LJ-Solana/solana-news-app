@@ -9,6 +9,7 @@ import { SystemProgram, Transaction, PublicKey, Connection, clusterApiUrl } from
 import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Buffer } from 'buffer';
 import { toast } from 'react-toastify';
+import slugify from 'slugify';
 
 // USDC token mint address (devnet USDC token)
 const USDC_TEST_TOKEN_MINT_ADDRESS = new PublicKey('5ruoovCtJDSuQcrUU3LQ4yMZuSAVBGCc6885Qh6P2Vz9');
@@ -17,6 +18,10 @@ const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss6
 // Initialize ed25519 hashing
 console.log('Initializing ed.etc.sha512Sync');
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
+
+function createSlug(title: string): string {
+  return slugify(title, { lower: true, strict: true });
+}
 
 // Function to generate content hash
 export function generateContentHash(articleData: { title: string; content: string }): string {
@@ -86,7 +91,6 @@ async function getOrCreateEscrowTokenAccount(connection: Connection, wallet: Wal
   return associatedTokenAddress;
 }
 
-// Function to submit and verify an article with escrow mechanism
 async function submitAndVerifyArticle(
   contentHash: string,
   isVerified: boolean,
@@ -200,21 +204,38 @@ async function submitAndVerifyArticle(
   }
 }
 
-
 export async function verifyArticle(
-  articleSlug: string,
+  article: {
+    title: string;
+    content: string;
+    sourceUrl: string;
+    author: string;
+    publishedAt: string;
+    urlToImage: string;
+    description: string;
+    slug?: string;
+  },
   walletAddress: string,
   signature: string,
-  articleData: { title: string; content: string; sourceUrl: string; author: string; publishedAt: string; urlToImage: string, description: string },
   wallet: WalletContextState
 ): Promise<{ success: boolean; message: string; onChainSignature?: string }> {
-  console.log('Starting verifyArticle function with params:', { articleSlug, walletAddress, signature, articleData });
+  console.log('Starting verifyArticle function with params:', { article, walletAddress, signature });
   try {
     // Ensure wallet is connected and has a public key
     if (!wallet.publicKey) {
       throw new Error('Wallet is not connected or missing public key');
     }
     console.log('Wallet public key:', wallet.publicKey.toBase58());
+
+    // Ensure the article has a slug
+    const articleData = {
+      ...article,
+      slug: article.slug || createSlug(article.title),
+    };
+
+    if (!articleData.slug) {
+      throw new Error('Slug is required for article verification');
+    }
 
     // Step 1: On-chain verification
     console.log('Starting on-chain verification');
@@ -230,7 +251,7 @@ export async function verifyArticle(
     // Step 2: Database update
     console.log('Starting database update');
     const verificationData = {
-      slug: articleSlug,
+      slug: articleData.slug,
       verified: true,
       signature: signature,
       author: articleData.author,
@@ -246,21 +267,53 @@ export async function verifyArticle(
       source_url: articleData.sourceUrl || '',
     };
 
-    console.log('Verification data:', verificationData);
+    console.log('Full verification data:', JSON.stringify(verificationData, null, 2));
 
-    const { data, error } = await supabase
+    // Insert new article
+    const { data: insertedData, error: insertError } = await supabase
       .from('articles')
-      .upsert(verificationData, { 
-        onConflict: 'slug',
-        ignoreDuplicates: false 
-      });
+      .insert(verificationData)
+      .select();
 
-    if (error) {
-      console.error('Error upserting article:', error);
-      throw error;
+    if (insertError) {
+      console.error('Error inserting article:', insertError);
+      throw insertError;
     }
 
-    console.log('Supabase response:', { data, error });
+    console.log('Supabase insert response:', { insertedData, insertError });
+
+    if (!insertedData || insertedData.length === 0) {
+      console.warn('Article inserted but no data returned. This might indicate a silent failure.');
+    }
+
+    // Retry fetching the article
+    let insertedArticle = null;
+    for (let i = 0; i < 3; i++) {
+      const { data: fetchedArticle, error: fetchError } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('slug', verificationData.slug)
+        .single();
+
+      if (fetchedArticle) {
+        insertedArticle = fetchedArticle;
+        break;
+      }
+
+      if (fetchError) {
+        console.error(`Attempt ${i + 1} to fetch inserted article failed:`, fetchError);
+      }
+
+      console.log(`Attempt ${i + 1} to fetch inserted article failed. Retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retrying
+    }
+
+    if (!insertedArticle) {
+      console.error('Failed to fetch the inserted article after multiple attempts');
+      return { success: false, message: 'Article verified but could not be retrieved from the database' };
+    }
+
+    console.log('Successfully inserted and retrieved article:', insertedArticle);
 
     return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
   } catch (error: unknown) {

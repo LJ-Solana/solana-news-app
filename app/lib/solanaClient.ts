@@ -1,24 +1,31 @@
-import { Program, AnchorProvider } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { IDL, NewsContent } from './news_content'; 
+import { AnchorProvider, Program } from '@project-serum/anchor';
+import {IDL} from '../lib/news_content';
 
-let program: Program<NewsContent> | null = null;
-
-export const getProgram = () => {
-  if (program) return program;
-
+export function getProgram() {
   console.log('Initializing program...');
-  const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL!);
-  console.log('Connection created');
-  const provider = new AnchorProvider(connection, window.solana, {});
-  console.log('Provider created');
-  
-  const programId = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
-  console.log('Program ID:', programId.toString());
 
-  program = new Program<NewsContent>(IDL as NewsContent, programId, provider);
-  console.log('Program initialized:', program);
-  console.log('Program account structure:', program.account);
+  const programId = process.env.NEXT_PUBLIC_PROGRAM_ID;
+  if (!programId) {
+    console.error('NEXT_PUBLIC_PROGRAM_ID is not set in environment variables');
+    throw new Error('Program ID is not set');
+  }
 
-  return program;
-};
+  console.log('Program ID:', programId);
+
+  try {
+    const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL!, 'confirmed');
+    console.log('Connection created');
+
+    const provider = new AnchorProvider(connection, window.solana, { commitment: 'confirmed' });
+    console.log('Provider created');
+
+    const program = new Program(IDL as any, new PublicKey(programId), provider);
+    console.log('Program instance created');
+
+    return program;
+  } catch (error) {
+    console.error('Error in getProgram:', error);
+    throw error;
+  }
+}

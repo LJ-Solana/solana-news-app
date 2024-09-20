@@ -13,7 +13,7 @@ import { queryContentRatings } from '../lib/queryContentRatings';
 import { getPDAFromContentHash, generateContentHash } from '../lib/articleVerification';
 import { getProgram } from '../lib/solanaClient';
 import { Program, Idl } from '@project-serum/anchor';
-
+import { toast } from 'react-toastify';
 
 export interface ArticleCardProps {
   id: string;
@@ -33,7 +33,8 @@ export interface ArticleCardProps {
   verifiedBy?: string;
   summary?: string;
   source_url: string;
-  onChainVerification: string;
+  onChainVerification: string | null;
+  onUpdate: (updatedArticle: ArticleCardProps) => void;
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ 
@@ -48,6 +49,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   url_to_image,
   source_url,
   featured = false,
+  onUpdate,
 }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [verifier, setVerifier] = useState<string | undefined>(undefined);
@@ -97,47 +99,64 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     fetchVerificationStatus();
   }, [fetchVerificationStatus]);
 
-  const handleVerification = async (sourceData: string) => {
-    if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
-      setAlert({ message: 'Wallet not connected or missing required properties', type: 'error' });
+  const handleVerification = async () => {
+    if (!wallet.connected || !wallet.publicKey) {
+      toast.error('Please connect your wallet first');
       return;
     }
 
     setIsVerifying(true);
-
     try {
-      const message = `Verify article: ${slug}\nSource: ${sourceData}`;
+      const message = `Verify article: ${slug}\nSource: ${source_url}`;
       const encodedMessage = new TextEncoder().encode(message);
-      const signatureBytes = await wallet.signMessage(encodedMessage);
+      const signatureBytes = await wallet.signMessage!(encodedMessage);
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
-      const walletAddress = wallet.publicKey.toBase58();
+
+      const articleData = {
+        title,
+        content: description,
+        sourceUrl: source_url,
+        author,
+        publishedAt,
+        urlToImage: url_to_image ?? '',
+        description,
+        slug,
+      };
 
       const result = await verifyArticle(
-        slug,
-        walletAddress,
+        articleData,
+        wallet.publicKey.toString(),
         base64Signature,
-        {
-          title,
-          content: description,
-          sourceUrl: sourceData,
-          author,
-          description,
-          publishedAt,
-          urlToImage: url_to_image || ''
-        },
         wallet
       );
 
       if (result.success) {
-        await fetchVerificationStatus();
-        setShowModal(true);
-        setAlert({ message: 'Article verified successfully', type: 'success' });
+        setIsVerified(true);
+        // Fetch the updated article data
+        const { data: updatedArticle, error } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) {
+          console.error('Error fetching updated article:', error);
+          toast.error('Failed to fetch updated article data');
+        } else if (updatedArticle) {
+          // Update the article state with the new data
+          onUpdate(updatedArticle);
+          toast.success('Article verified successfully');
+        } else {
+          console.warn('Updated article not found');
+          toast.warning('Article verified, but updated data not found');
+        }
       } else {
-        setAlert({ message: `Verification failed: ${result.message}`, type: 'error' });
+        console.error('Verification failed:', result.message);
+        toast.error(`Verification failed: ${result.message}`);
       }
     } catch (error) {
-      console.error('Error verifying article:', error);
-      setAlert({ message: 'An error occurred while verifying the article', type: 'error' });
+      console.error('Error during verification:', error);
+      toast.error('An error occurred during verification');
     } finally {
       setIsVerifying(false);
     }
