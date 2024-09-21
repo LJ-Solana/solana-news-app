@@ -1,31 +1,81 @@
-
 "use client";
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import ArticleCard from './components/ArticleCard';
-import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaChevronDown, FaCheckCircle } from 'react-icons/fa';
+import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaChevronDown, FaCheckCircle, FaSearch } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
 import { categories } from './lib/serverNewsFetcher';
 import { useNews } from './lib/useNews';
 import USDCBalanceButton from './components/USDCBalanceButton';
+import { supabase } from './lib/supabaseClient';
 
 export default function Home() {
   const { articles, featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [verifiedArticles, setVerifiedArticles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
   };
 
-  const toggleVerifiedFilter = () => {
-    setShowVerifiedOnly(!showVerifiedOnly);
+  const toggleVerifiedFilter = async () => {
+    const newShowVerifiedOnly = !showVerifiedOnly;
+    setShowVerifiedOnly(newShowVerifiedOnly);
+
+    if (newShowVerifiedOnly) {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('*')
+        .not('on_chain_verification', 'is', null);
+
+      if (error) {
+        console.error('Error fetching verified articles:', error);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setVerifiedArticles(data as any);
+      }
+    }
   };
 
-  const displayedArticles = showVerifiedOnly
-    ? filteredArticles.filter(article => article.verifiedBy != null)
-    : filteredArticles;
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm) {
+        searchArticles(searchTerm);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const searchArticles = async (term: string) => {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .ilike('title', `%${term}%`)
+      .order('published_at', { ascending: false });
+
+    if (error) {
+      console.error('Error searching articles:', error);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setSearchResults(data as any);
+    }
+  };
+
+  const displayedArticles = useMemo(() => {
+    if (searchTerm) {
+      return searchResults;
+    } else if (showVerifiedOnly) {
+      return verifiedArticles;
+    } else {
+      return filteredArticles;
+    }
+  }, [filteredArticles, showVerifiedOnly, verifiedArticles, searchTerm, searchResults]);
 
   console.log('Total articles:', articles.length); 
 
@@ -59,6 +109,16 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold text-gray-800 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-green-400">Gulfstream Media</h1>
           <p className="text-xl text-gray-600">Your <strong>Open Source</strong> for Cutting-Edge News</p>
         </header> 
+        <div className="mb-8 relative">
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search articles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+          />
+        </div>
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
             <FaNewspaper className="mr-2 text-green-500" />
@@ -80,24 +140,27 @@ export default function Home() {
             ))}
           </div>
         </section>
-        
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-            <FaStar className="mr-2 text-yellow-500" />
-            Featured Bytes
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredArticles.map(article => (
-              <ArticleCard key={article.id} {...article} featured={true} />
-            ))}
-          </div>
-        </section>
+        {!searchTerm && (
+          <section className="mb-16">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+              <FaStar className="mr-2 text-yellow-500" />
+              Featured Bytes
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredArticles.map(article => (
+                <ArticleCard key={article.id} {...article} featured={true} />
+              ))}
+            </div>
+          </section>
+        )}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800 flex items-center">
-              <FaClock className="mr-2 text-blue-500" />
-              {selectedCategory ? `${selectedCategory} Bytes` : 'Latest Bytes'}
-            </h2>
+            {!searchTerm && (
+              <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+                <FaClock className="mr-2 text-blue-500" />
+                {selectedCategory ? `${selectedCategory} Bytes` : 'Latest Bytes'}
+              </h2>
+            )}
             <button
               onClick={toggleVerifiedFilter}
               className={`flex items-center px-4 py-2 rounded-full transition duration-300 ${

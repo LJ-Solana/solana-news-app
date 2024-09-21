@@ -6,20 +6,20 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   console.log('Fetching article with slug:', params.slug);
   
   try {
-    const { data: article, error } = await supabase
+    const { data, error } = await supabase
       .from('articles')
       .select('*')
       .eq('slug', params.slug)
       .single();
 
-    console.log('Supabase query result:', { article, error });
+    console.log('Raw Supabase response:', data);
 
     if (error) {
       console.error('Error fetching article:', error);
       throw error;
     }
 
-    if (!article) {
+    if (!data) {
       console.log('Article not found in database');
       notFound();
     }
@@ -36,7 +36,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       <div className="min-h-screen bg-gray-100">
         <main className="container mx-auto px-4 py-8">
           <article className="bg-white rounded-lg shadow-md p-6">
-            <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+            <h1 className="text-4xl font-bold mb-4">{data.title}</h1>
             {/* Rest of your component */}
           </article>
         </main>
