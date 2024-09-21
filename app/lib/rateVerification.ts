@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient';
 import { PublicKey } from '@solana/web3.js';
 import { toast } from 'react-toastify'; 
 import { getProgram } from './solanaClient';
+import { SendTransactionError } from '@solana/web3.js';
 
 export const rateContent = async (articleData: { title: string; content: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
@@ -100,7 +101,7 @@ export const rateContent = async (articleData: { title: string; content: string 
       await program.provider.connection.confirmTransaction(txid);
 
       console.log("Rating submitted successfully. Transaction signature", txid);
-      toast.success('Rating submitted successfully', {
+      toast.success('Rating has been added successfully', {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
@@ -115,10 +116,36 @@ export const rateContent = async (articleData: { title: string; content: string 
     }
   } catch (error) {
     console.error("Error fetching or processing content account:", error);
-    if (error instanceof Error) {
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
+    if (error instanceof SendTransactionError) {
+      const logs = error.logs;
+      if (logs && logs.some(log => log.includes("Error Code: AlreadyRated"))) {
+        toast.warning('You have already rated this content', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      } else {
+        toast.error('Failed to add rating. Please try again.', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+    } else {
+      toast.error('Failed to add rating. Please try again.', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
     throw error;
   }

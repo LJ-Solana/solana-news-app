@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import ArticleCard from './components/ArticleCard';
+import NewsFeedCard from './components/NewsFeedCard';
 import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaChevronDown, FaCheckCircle, FaSearch } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
 import { categories } from './lib/serverNewsFetcher';
@@ -13,9 +14,10 @@ export default function Home() {
   const { articles, featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
-  const [verifiedArticles, setVerifiedArticles] = useState([]);
+  const [verifiedArticles, setVerifiedArticles] = useState<[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [cardType, setCardType] = useState('grid'); 
 
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
@@ -161,6 +163,24 @@ export default function Home() {
                 {selectedCategory ? `${selectedCategory} Bytes` : 'Latest Bytes'}
               </h2>
             )}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setCardType('grid')}
+                className={`px-4 py-2 rounded-full transition duration-300 ${
+                  cardType === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                Grid View
+              </button>
+              <button
+                onClick={() => setCardType('feed')}
+                className={`px-4 py-2 rounded-full transition duration-300 ${
+                  cardType === 'feed' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                }`}
+              >
+                Feed View
+              </button>
+            </div>
             <button
               onClick={toggleVerifiedFilter}
               className={`flex items-center px-4 py-2 rounded-full transition duration-300 ${
@@ -184,11 +204,19 @@ export default function Home() {
               Verified
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {displayedArticles.map(article => (
-              <ArticleCard key={article.id} {...article} />
-            ))}
-          </div>
+          {cardType === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {displayedArticles.map(article => (
+                <ArticleCard key={article.id} {...article} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {displayedArticles.map(article => (
+                <NewsFeedCard key={article.id} {...article} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
       

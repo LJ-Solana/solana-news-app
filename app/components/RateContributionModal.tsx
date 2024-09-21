@@ -53,7 +53,14 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
     e.preventDefault();
     if (!wallet.publicKey || !wallet.signTransaction) {
       console.error('Wallet not connected');
-      toast.error('Wallet not connected');
+      toast.error('Wallet not connected', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
@@ -65,6 +72,14 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
       }
       setShowSuccessModal(true);
       onClose();
+      toast.success('Rating submitted successfully', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } catch (error) {
       console.error('Error submitting rating:', error);
       toast.error('Error submitting rating: ' + (error instanceof Error ? error.message : String(error)), {
