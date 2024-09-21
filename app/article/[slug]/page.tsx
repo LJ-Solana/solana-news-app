@@ -12,8 +12,6 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       .eq('slug', params.slug)
       .single();
 
-    console.log('Raw Supabase response:', data);
-
     if (error) {
       console.error('Error fetching article:', error);
       throw error;

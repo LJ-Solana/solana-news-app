@@ -81,27 +81,27 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-4 sm:p-8 rounded-lg max-w-3xl w-full h-[90vh] sm:h-[75vh] overflow-y-auto relative">
+        <div className="bg-gray-800 p-4 sm:p-8 rounded-lg max-w-3xl w-full h-[90vh] sm:h-[75vh] overflow-y-auto relative">
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-200 transition-colors duration-200"
             aria-label="Close"
           >
             <FaTimes size={20} />
           </button>
-          <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-6 flex items-center text-gray-800">
-            <FaInfoCircle className="mr-2 sm:mr-3 text-blue-500" />
+          <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-6 flex items-center text-gray-200">
+            <FaInfoCircle className="mr-2 sm:mr-3 text-blue-400" />
             Rate Source Contribution
           </h2>
-          <p className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4 text-gray-700">{articleTitle}</p>
-          <p className="text-sm sm:text-md text-gray-600 mb-3 sm:mb-6">
+          <p className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4 text-gray-300">{articleTitle}</p>
+          <p className="text-sm sm:text-md text-gray-400 mb-3 sm:mb-6">
             Please rate the quality and accuracy of this contributions source&apos;s.
           </p>
-          <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-3 sm:p-6 mb-3 sm:mb-6 rounded-r">
+          <div className="bg-gray-700 border-l-4 border-blue-500 text-gray-300 p-3 sm:p-6 mb-3 sm:mb-6 rounded-r">
             <p className="font-bold text-base sm:text-lg mb-2 sm:mb-3">Contribution:</p>
             {sourceUrl && (
               <p className="text-sm sm:text-base break-words overflow-hidden">
-                <p className="text-blue-600">
+                <p className="text-blue-400">
                   {sourceUrl}
                 </p>
               </p>
@@ -113,7 +113,7 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
                 <FaStar
                   key={star}
                   className={`cursor-pointer text-3xl ${
-                    star <= rating ? 'text-yellow-500' : 'text-gray-300'
+                    star <= rating ? 'text-yellow-500' : 'text-gray-600'
                   }`}
                   onClick={() => setRating(star)}
                 />
@@ -123,13 +123,13 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-gray-800 font-semibold text-sm sm:text-base"
+                className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors duration-200 text-gray-200 font-semibold text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-3 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 font-semibold text-sm sm:text-base"
+                className="px-3 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors duration-200 font-semibold text-sm sm:text-base"
               >
                 Submit Rating
               </button>
