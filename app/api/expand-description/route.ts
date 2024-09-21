@@ -14,13 +14,17 @@ export async function POST(request: Request) {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a helpful assistant that expands on article descriptions." },
-        { role: "user", content: `Expand on this article description, providing more context and details: ${description}` }
+        { role: "system", content: "You are a helpful assistant that expands on article descriptions in a factual manner. Provide a well-structured response with paragraphs separated by newlines." },
+        { role: "user", content: `Expand on this article description, providing more context, details, and factual evidence. Ensure your response is complete and well-structured: ${description}` }
       ],
-      max_tokens: 300  
+      max_tokens: 500,
+      temperature: 0.7,
+      stop: ["\n\n\n"]  // Stop generation if three consecutive newlines are encountered
     });
 
-    return NextResponse.json({ expandedDescription: response.choices[0].message.content });
+    const formattedResponse = response.choices[0].message.content?.trim().split('\n\n').join('\n\n') || '';
+
+    return NextResponse.json({ expandedDescription: formattedResponse });
   } catch (error) {
     console.error('Error in expand-description API:', error);
     return NextResponse.json({ 
