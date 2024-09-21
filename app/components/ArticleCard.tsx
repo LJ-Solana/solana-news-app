@@ -34,7 +34,7 @@ export interface ArticleCardProps {
   summary?: string;
   source_url: string;
   onChainVerification: string | null;
-  onUpdate: (updatedArticle: ArticleCardProps) => void;
+  onUpdate?: (updatedArticle: ArticleCardProps) => void;
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ 
@@ -143,8 +143,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           console.error('Error fetching updated article:', error);
           toast.error('Failed to fetch updated article data');
         } else if (updatedArticle) {
-          // Update the article state with the new data
-          onUpdate(updatedArticle);
+          if (onUpdate && typeof onUpdate === 'function') {
+            onUpdate(updatedArticle);
+          }
           toast.success('Article verified successfully');
         } else {
           console.warn('Updated article not found');

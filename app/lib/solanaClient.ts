@@ -20,6 +20,7 @@ export function getProgram() {
     const provider = new AnchorProvider(connection, window.solana, { commitment: 'confirmed' });
     console.log('Provider created');
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const program = new Program(IDL as any, new PublicKey(programId), provider);
     console.log('Program instance created');
 
