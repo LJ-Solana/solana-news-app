@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
-import { FaStar, FaArrowLeft } from 'react-icons/fa';
+import { FaStar, FaArrowLeft, FaCalendarAlt, FaUser, FaLink, FaInfoCircle } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { getProgram } from '../../lib/solanaClient';
 import { queryContentRatings } from '../../lib/queryContentRatings';
@@ -17,8 +17,8 @@ export default function ArticlePage() {
   const [article, setArticle] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState<number | null>(null);
+  const [expandedDescription, setExpandedDescription] = useState<string | null>(null);
   const wallet = useWallet();
-  const router = useRouter();
 
   useEffect(() => {
     async function fetchArticle() {
@@ -35,6 +35,7 @@ export default function ArticlePage() {
       } else {
         setArticle(data);
         fetchRating(data);
+        expandDescription(data.description);
       }
       setLoading(false);
     }
@@ -60,6 +61,29 @@ export default function ArticlePage() {
       }
     } else {
       setRating(null);
+    }
+  };
+
+  const expandDescription = async (description: string) => {
+    try {
+      const response = await fetch('/api/expand-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to expand description: ${errorData.error}, ${errorData.details}`);
+      }
+
+      const data = await response.json();
+      setExpandedDescription(data.expandedDescription);
+    } catch (error) {
+      console.error('Error expanding description:', error);
+      setExpandedDescription(null);
     }
   };
 
@@ -101,13 +125,19 @@ export default function ArticlePage() {
             </div>
           )}
           <h1 className="text-4xl font-bold mb-4 text-white">{article.title}</h1>
-          <p className="text-gray-400 mb-4">By {article.author} | {new Date(article.publishedAt).toLocaleDateString()}</p>
+          <p className="text-gray-400 mb-4">
+            <FaUser className="inline-block mr-2" />
+            {article.author} | 
+            <FaCalendarAlt className="inline-block mx-2" />
+            {new Date(article.publishedAt).toLocaleDateString()}
+          </p>
           <div className="flex items-center mb-4">
             <span className="text-gray-300 mr-2">On-Chain Rating:</span>
             {renderStars()}
           </div>
           {article.source_url && (
             <p className="text-blue-400 mb-4">
+              <FaLink className="inline-block mr-2" />
               <a href={article.source_url} target="_blank" rel="noopener noreferrer">
                 Source URL
               </a>
@@ -115,6 +145,15 @@ export default function ArticlePage() {
           )}
           <div className="prose max-w-none text-gray-300">
             <p>{article.description}</p>
+            {expandedDescription && (
+              <div className="mt-4">
+                <h3 className="text-xl font-semibold mb-2 text-white">
+                  <FaInfoCircle className="inline-block mr-2" />
+                  Extended Description:
+                </h3>
+                <p>{expandedDescription}</p>
+              </div>
+            )}
           </div>
         </article>
       </main>
