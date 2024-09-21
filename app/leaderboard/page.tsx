@@ -53,13 +53,22 @@ const LeaderboardPage: React.FC = () => {
         }
 
         // Sort the results
-        const sortedVerifiers = query.sort((a, b) => 
-          showContributions 
-            ? b.verified_count - a.verified_count
-            : b.rating_count - a.rating_count
-        );
+        const sortedVerifiers = query.sort((a, b) => {
+          if (showContributions) {
+            return ((b as Verifier).verified_count || 0) - ((a as Verifier).verified_count || 0);
+          } else {
+            return ((b as Verifier).rating_count || 0) - ((a as Verifier).rating_count || 0);
+          }
+        });
 
-        setVerifiers(sortedVerifiers);
+        // Ensure all required properties are present in the sorted verifiers
+        const completeVerifiers: Verifier[] = sortedVerifiers.map(v => ({
+          pubkey: v.pubkey,
+          verified_count: showContributions ? ((v as any).verified_count || 0) : 0,
+          rating_count: showContributions ? 0 : ((v as any).rating_count || 0)
+        }));
+
+        setVerifiers(completeVerifiers);
       } catch (err) {
         setError('Failed to load verifiers. Please try again later.');
         console.error('Error fetching verifiers:', err);

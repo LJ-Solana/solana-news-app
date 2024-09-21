@@ -219,19 +219,19 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             />
           </div>
           <div className="p-4 space-y-3 flex-grow">
-            <h2 className={`font-bold ${featured ? 'text-xl' : 'text-lg'} leading-tight text-gray-200`}>{title}</h2>
-            <p className="text-sm text-gray-400 line-clamp-2">{description}</p>
+            <h2 className={`font-bold ${featured ? 'text-xl' : 'text-lg'} leading-tight text-gray-100`}>{title}</h2>
+            <p className="text-sm text-gray-300 line-clamp-2">{description}</p>
             <div className="flex justify-between items-center text-xs text-gray-400">
               <span className="flex items-center"><FaUser className="mr-1" /> {author}</span>
               <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-gray-400">⛓️ On-Chain Score: </span>
+              <span className="text-xs text-gray-300">⛓️ On-Chain Score: </span>
               <div className="flex items-center">
                 {renderStars()}
               </div>
             </div>
-            <div className="text-xs text-gray-400 flex items-center justify-between">
+            <div className="text-xs text-gray-300 flex items-center justify-between">
               <span>Source: {source && typeof source === 'object' && 'name' in source ? source.name : 'Unknown'}</span>
               <span>{icon} {category}</span>
             </div>
@@ -268,7 +268,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             <button
               onClick={() => setShowSourceDataModal(true)}
               className={`flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm ${
-                isVerified ? 'bg-blue-900 text-blue-400 cursor-not-allowed' : isVerifying ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-blue-400 hover:bg-blue-800'
+                isVerified ? 'bg-blue-900 text-blue-300 cursor-not-allowed' : isVerifying ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-blue-300 hover:bg-blue-800'
               }`}
               disabled={isVerified || isVerifying}
             >
@@ -289,7 +289,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
             {isVerified && (
               <button
                 onClick={() => setShowRateContributionModal(true)}
-                className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-yellow-900 text-yellow-400 hover:bg-yellow-800 flex items-center justify-center"
+                className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-yellow-900 text-yellow-300 hover:bg-yellow-800 flex items-center justify-center"
               >
                 <FaStar className="mr-1" />
                 <span>Rate Contribution</span>
