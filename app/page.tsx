@@ -11,15 +11,14 @@ import USDCBalanceButton from './components/USDCBalanceButton';
 import { supabase } from './lib/supabaseClient';
 
 export default function Home() {
-  const { articles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
+  const {filteredArticles, selectedCategory, setSelectedCategory } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [verifiedArticles, setVerifiedArticles] = useState<[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [cardType, setCardType] = useState('grid'); 
-
-
+  
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
   };
@@ -80,8 +79,6 @@ export default function Home() {
     }
   }, [filteredArticles, showVerifiedOnly, verifiedArticles, searchTerm, searchResults]);
 
-  console.log('Total articles:', articles.length); 
-
   return (
     <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
       <div className="container mx-auto px-4 py-8">
@@ -134,7 +131,7 @@ export default function Home() {
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
           />
         </div>
-        <section className="mb-16">
+        <section className="mb-8">
           <h2 className="text-3xl font-bold text-gray-100 mb-6 flex items-center">
             <FaNewspaper className="mr-2 text-green-400" />
             Categories
@@ -155,14 +152,14 @@ export default function Home() {
             ))}
           </div>
         </section>
+        {!searchTerm && (
+          <h2 className="text-3xl font-bold text-gray-100 flex mb-8 items-center">
+            <FaClock className="mr-2 text-blue-400" />
+            {selectedCategory ? `${selectedCategory} Bytes` : 'Latest Bytes'}
+          </h2>
+        )}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-6">
-            {!searchTerm && (
-              <h2 className="text-3xl font-bold text-gray-100 flex items-center">
-                <FaClock className="mr-2 text-blue-400" />
-                {selectedCategory ? `${selectedCategory} Bytes` : 'Latest Bytes'}
-              </h2>
-            )}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setCardType('grid')}
