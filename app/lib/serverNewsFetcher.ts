@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { ArticleCardProps } from '../components/ArticleCard';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.gulfstream.wtf/';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.gulfstream.wtf';
 
 export async function fetchNewsFromAPI(): Promise<ArticleCardProps[]> {
   try {
-    console.log('Fetching news from API:', `${API_BASE_URL}/api/news`);
-    const response = await axios.get<{ articles: ArticleCardProps[] }>(`${API_BASE_URL}/api/news`);
+    const apiUrl = new URL('/api/news', API_BASE_URL).toString();
+    console.log('Fetching news from API:', apiUrl);
+    const response = await axios.get<{ articles: ArticleCardProps[] }>(apiUrl);
     console.log('API response:', response.data);
     return response.data.articles;
   } catch (error) {
@@ -38,8 +39,9 @@ export async function getNews(): Promise<ArticleCardProps[]> {
 
 export async function getArticleBySlug(slug: string): Promise<ArticleCardProps | null> {
   try {
+    const apiUrl = new URL(`/api/articles/${slug}`, API_BASE_URL).toString();
     console.log(`Fetching article with slug: ${slug}`);
-    const response = await axios.get<ArticleCardProps>(`${API_BASE_URL}/api/articles/${slug}`);
+    const response = await axios.get<ArticleCardProps>(apiUrl);
     console.log('Article data received:', response.data);
     return response.data;
   } catch (error) {
