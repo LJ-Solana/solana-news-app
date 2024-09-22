@@ -64,7 +64,9 @@ const LeaderboardPage: React.FC = () => {
         // Ensure all required properties are present in the sorted verifiers
         const completeVerifiers: Verifier[] = sortedVerifiers.map(v => ({
           pubkey: v.pubkey,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           verified_count: showContributions ? ((v as any).verified_count || 0) : 0,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           rating_count: showContributions ? 0 : ((v as any).rating_count || 0)
         }));
 

@@ -9,6 +9,7 @@ import { FaArrowLeft, FaCalendarAlt, FaUser, FaLink, FaHandsHelping, FaRobot, Fa
 
 export default function ArticlePage() {
   const { slug } = useParams();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [article, setArticle] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedDescription, setExpandedDescription] = useState<string | null>(null);

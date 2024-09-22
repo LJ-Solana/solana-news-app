@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import ArticleCard from './components/ArticleCard';
 import NewsFeedCard from './components/NewsFeedCard';
-import { FaNewspaper, FaStar, FaClock, FaTrophy, FaUserCheck, FaChevronDown, FaCheckCircle, FaSearch } from 'react-icons/fa';
+import { FaNewspaper, FaClock, FaTrophy, FaUserCheck, FaChevronDown, FaCheckCircle, FaSearch } from 'react-icons/fa';
 import WalletButton from './components/WalletButton';
 import { categories } from './lib/serverNewsFetcher';
 import { useNews } from './lib/useNews';
@@ -11,13 +11,14 @@ import USDCBalanceButton from './components/USDCBalanceButton';
 import { supabase } from './lib/supabaseClient';
 
 export default function Home() {
-  const { articles, featuredArticles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
+  const { articles, filteredArticles, selectedCategory, setSelectedCategory } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [verifiedArticles, setVerifiedArticles] = useState<[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [cardType, setCardType] = useState('grid'); 
+
 
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
@@ -84,33 +85,45 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">
-          <div className="relative w-full sm:w-auto sm:flex-grow sm:mr-4">
-            <button 
-              onClick={toggleActions}
-              className="bg-blue-700 hover:bg-blue-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md relative z-50"
-            >
-              <span className="font-semibold text-base sm:text-lg">Actions</span>
-              <FaChevronDown className={`ml-2 transition-transform duration-300 ${isActionsOpen ? 'transform rotate-180' : ''}`} />
-            </button>
-            <div className={`absolute top-full left-0 right-0 bg-gray-800 shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${isActionsOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <Link href="/verify-articles" className="w-full bg-blue-700 hover:bg-blue-800 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
-                <FaUserCheck className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Become a Verifier</span>
-              </Link>
-              <Link href="/leaderboard" className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 sm:px-6 py-2 sm:py-3 transition duration-300 flex items-center">
-                <FaTrophy className="mr-2 sm:mr-3 text-lg sm:text-xl" /> <span className="font-medium text-sm sm:text-base">Leaderboard</span>
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto justify-end">
-            <USDCBalanceButton />
-            <WalletButton />
-          </div>
-        </div>
         <header className="text-center mb-12">
           <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Gulfstream Media</h1>
           <p className="text-xl text-gray-300">Your <strong>Open Source</strong> for Cutting-Edge News</p>
         </header> 
+        <div className="relative z-50 mb-8">
+          <button 
+            onClick={toggleActions}
+            className="bg-indigo-700 hover:bg-indigo-800 text-white px-6 py-4 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md"
+          >
+            <span className="font-semibold text-lg">Actions</span>
+            <FaChevronDown className={`ml-2 transition-transform duration-300 ${isActionsOpen ? 'transform rotate-180' : ''}`} />
+          </button>
+          <div className={`absolute top-full left-0 right-0 bg-gray-800 shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${isActionsOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+            <Link href="/verify-articles" className="block w-full bg-indigo-700 hover:bg-indigo-800 text-white px-6 py-4 transition duration-300">
+              <div className="flex items-center">
+                <FaUserCheck className="mr-4 text-2xl" /> 
+                <span className="font-medium text-lg">Become a Verifier</span>
+              </div>
+            </Link>
+            <Link href="/leaderboard" className="block w-full bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 transition duration-300 mt-1">
+              <div className="flex items-center">
+                <FaTrophy className="mr-4 text-2xl" /> 
+                <span className="font-medium text-lg">Leaderboard</span>
+              </div>
+            </Link>
+            <div className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-4 transition duration-300 mt-1">
+            <div className="flex items-center justify-between">
+                <span className="font-medium text-lg">Top Up News</span>
+                <USDCBalanceButton />
+              </div>
+            </div>
+            <div className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-4 transition duration-300 mt-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-lg">Connect Wallet</span>
+                <WalletButton />
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="mb-8 relative">
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
@@ -142,19 +155,6 @@ export default function Home() {
             ))}
           </div>
         </section>
-        {!searchTerm && (
-          <section className="mb-16">
-            <h2 className="text-3xl font-bold text-gray-100 mb-6 flex items-center">
-              <FaStar className="mr-2 text-yellow-400" />
-              Featured Bytes
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredArticles.map(article => (
-                <ArticleCard key={article.id} {...article} featured={true} />
-              ))}
-            </div>
-          </section>
-        )}
         <section className="mb-16">
           <div className="flex justify-between items-center mb-6">
             {!searchTerm && (
