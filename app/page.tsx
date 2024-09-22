@@ -9,6 +9,7 @@ import { categories } from './lib/serverNewsFetcher';
 import { useNews } from './lib/useNews';
 import USDCBalanceButton from './components/USDCBalanceButton';
 import { supabase } from './lib/supabaseClient';
+import WarningBanner from './components/WarningBanner';
 
 export default function Home() {
   const {filteredArticles, selectedCategory, setSelectedCategory } = useNews();
@@ -81,6 +82,7 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
+      <WarningBanner />
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Gulfstream Media</h1>
