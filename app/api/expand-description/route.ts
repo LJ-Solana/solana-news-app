@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       ],
       max_tokens: 500,
       temperature: 0.7,
-      stop: ["\n\n\n"]  // Stop generation if three consecutive newlines are encountered
+      stop: ["\n\n\n"]  
     });
 
     const formattedResponse = response.choices[0].message.content?.trim().split('\n\n').join('\n\n') || '';

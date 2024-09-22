@@ -12,8 +12,8 @@ const ClientWalletProvider = dynamic(
 )
 
 export const metadata: Metadata = {
-  title: 'Gulfstream Media',
-  description: 'Stay updated with the latest news and articles in technology and science',
+  title: 'Byte Media',
+  description: 'Stay updated with global, economically verified truthful news.',
 }
 
 export default function RootLayout({
