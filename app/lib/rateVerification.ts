@@ -3,12 +3,12 @@ import { web3 } from '@project-serum/anchor';
 import { supabase } from './supabaseClient';
 import { PublicKey } from '@solana/web3.js';
 import { toast } from 'react-toastify'; 
-import { getProgram } from './solanaClient';
+import { getSolanaProgram } from './solanaClient';
 import { SendTransactionError } from '@solana/web3.js';
 
 export const rateContent = async (articleData: { title: string; content: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
-  const program = getProgram();
+  const program = getSolanaProgram();
   const publicKey = wallet.publicKey;
   const signTransaction = wallet.signTransaction;
 
