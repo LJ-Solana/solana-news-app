@@ -1,42 +1,27 @@
+import { Program, AnchorProvider } from '@project-serum/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { Program, AnchorProvider, Idl } from '@project-serum/anchor';
+import { IDL } from './news_content'; 
 
 let programInstance: Program | null = null;
+let initializationPromise: Promise<void> | null = null;
 
-export async function initializeSolanaProgram(): Promise<Program> {
-  if (programInstance) {
-    return programInstance;
+export async function initializeSolanaProgram(wallet: AnchorProvider['wallet'], connection: Connection): Promise<void> {
+  if (!initializationPromise) {
+    initializationPromise = (async () => {
+      const provider = new AnchorProvider(connection, wallet, {
+        preflightCommitment: 'processed',
+      });
+      const programId = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      programInstance = new Program(IDL as unknown as any, programId, provider);
+      console.log('Solana program initialized:', programInstance);
+    })();
   }
-
-  try {
-    const response = await fetch('/api/program-info');
-    if (!response.ok) {
-      throw new Error('Failed to fetch program info');
-    }
-    const { programId, idl, rpcUrl } = await response.json();
-
-    const connection = new Connection(rpcUrl, 'confirmed');
-    const wallet = window.solana; // Assuming you're using Phantom or a similar wallet
-
-    if (!wallet) {
-      throw new Error('Wallet not found. Please install a Solana wallet extension.');
-    }
-
-    const provider = new AnchorProvider(
-      connection, 
-      wallet, 
-      { preflightCommitment: 'confirmed' }
-    );
-
-    programInstance = new Program(idl as Idl, new PublicKey(programId), provider);
-    return programInstance;
-  } catch (error) {
-    console.error('Failed to initialize Solana program:', error);
-    throw error;
-  }
+  return initializationPromise;
 }
 
-export function getSolanaProgram(): Program {
+export function getSolanaProgram(): Program | null {
   if (!programInstance) {
     throw new Error('Solana program not initialized. Call initializeSolanaProgram first.');
   }

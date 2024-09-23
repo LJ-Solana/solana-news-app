@@ -1,7 +1,8 @@
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
 import { sha256 } from 'js-sha256';
-import { getSolanaProgram } from './solanaClient';
+import { getSolanaProgram, initializeSolanaProgram } from './solanaClient';
+import { supabase } from './supabaseClient';
 import { web3 } from '@project-serum/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { SystemProgram, Transaction, PublicKey, Connection, clusterApiUrl } from '@solana/web3.js';
@@ -97,6 +98,10 @@ async function submitAndVerifyArticle(
   wallet: WalletContextState
 ) {
   try {
+    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+    
+    await initializeSolanaProgram(wallet as unknown as any, connection); // Ensure the program is initialized
+
     const program = getSolanaProgram();
     if (!program) {
       throw new Error('Failed to get program');
@@ -126,7 +131,6 @@ async function submitAndVerifyArticle(
     const [escrowAuthorityPDA] = PublicKey.findProgramAddressSync([Buffer.from('escrow_authority')], program.programId);
 
     // Get or create the escrow token account
-    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
     const escrowTokenAccount = await getOrCreateEscrowTokenAccount(connection, wallet, escrowAuthorityPDA);
 
     // Prepare the transaction
@@ -170,15 +174,13 @@ async function submitAndVerifyArticle(
 
     console.log('Sending transaction...');
     const signature = await connection.sendRawTransaction(signedTx.serialize());
-    console.log('Transaction sent, signature:', signature);
 
-    // Retry logic for transaction confirmation
+    console.log('Confirming transaction...');
     let confirmed = false;
     let attempts = 0;
     const maxAttempts = 5;
     while (!confirmed && attempts < maxAttempts) {
       try {
-        console.log(`Attempt ${attempts + 1}: Confirming transaction...`);
         const confirmation = await connection.confirmTransaction(signature, 'confirmed');
         console.log('Transaction confirmation:', confirmation);
         confirmed = true;
@@ -202,7 +204,6 @@ async function submitAndVerifyArticle(
     throw error;
   }
 }
-
 export async function verifyArticle(
   article: {
     title: string;
@@ -220,61 +221,61 @@ export async function verifyArticle(
 ): Promise<{ success: boolean; message: string; onChainSignature?: string }> {
   console.log('Starting verifyArticle function with params:', { article, walletAddress, signature });
   try {
-    // Ensure wallet is connected and has a public key
     if (!wallet.publicKey) {
       throw new Error('Wallet is not connected or missing public key');
     }
     console.log('Wallet public key:', wallet.publicKey.toBase58());
 
-    // Step 1: Call the backend API to verify the article and update the database
-    const backendResponse = await fetch('/api/verify-article', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        article,
-        walletAddress,
-        signature,
-      }),
-    });
+    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed'); // Define connection here
+    await initializeSolanaProgram(wallet as unknown as any, connection); // Ensure the program is initialized
 
-    if (!backendResponse.ok) {
-      const errorData = await backendResponse.json();
-      throw new Error(`Backend verification failed: ${errorData.message}`);
-    }
+    // Generate content hash and PDA on the frontend
+    const contentHash = generateContentHash(article);
+    const pda = getPDAFromContentHash(contentHash);
 
-    const { contentHash } = await backendResponse.json();
+    console.log('Generated content hash:', contentHash);
+    console.log('Generated PDA:', pda.toBase58());
 
-    // Step 2: Perform on-chain verification
     console.log('Starting on-chain verification');
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
       true, 
       true, 
-      wallet
+      wallet,
     );
     console.log('On-chain verification completed:', onChainSignature);
 
-    // Step 3: Confirm verification and update article status
-    const confirmResponse = await fetch('/api/confirm-verification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        slug: article.slug || createSlug(article.title), 
-        onChainSignature 
-      }),
-    });
+    const slug = article.slug || createSlug(article.title);
+    console.log(`Article ${slug} verified successfully with on-chain signature: ${onChainSignature}`);
 
-    if (!confirmResponse.ok) {
-      const errorData = await confirmResponse.json();
-      throw new Error(errorData.error || 'Failed to confirm article verification');
+    // Add to supabase
+    const { error } = await supabase
+      .from('articles')
+      .update({
+        verified: true,
+        verified_by: walletAddress,
+        signature,
+        on_chain_verification: onChainSignature,
+      })
+      .eq('slug', slug);
+
+    if (error) {
+      console.error('Error updating article in supabase:', error);
+      throw new Error('Failed to update article in supabase');
+    } else {
+      console.log('Article successfully updated in supabase');
     }
 
-    const { message: confirmMessage } = await confirmResponse.json();
-    return { success: true, message: confirmMessage || 'Article verified successfully', onChainSignature };
+    toast.success('Article verified successfully', {
+      position: "bottom-left",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
+    return { success: true, message: 'Article verified successfully', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
     if (error instanceof Error) {

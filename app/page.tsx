@@ -82,7 +82,7 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
-      <div className="sticky top-0 z-50">
+      <div className="sticky top-0 z-10">
         <WarningBanner />
       </div>
       <div className="container mx-auto px-4 py-8">
