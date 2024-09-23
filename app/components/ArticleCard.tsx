@@ -206,7 +206,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   return (
     <>
       <div className="bg-gray-800 rounded-lg shadow-xlg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-700 flex flex-col h-full">
-        <Link href={`/article/${slug}`} className="block flex-grow">
           <div className="relative w-full h-48">
             <Image
               src={!imageError && url_to_image ? url_to_image : '/placeholder-image.png'}
@@ -256,7 +255,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               </div>
             </div>
           </div>
-        </Link>
         <div className="px-4 pb-4 mt-auto flex flex-col space-y-2">
           <Link href={`/article/${slug}`} className="w-full">
             <button className="w-full py-2 rounded-md text-purple-400 font-medium transition duration-300 bg-purple-900 hover:bg-purple-800 text-base">
