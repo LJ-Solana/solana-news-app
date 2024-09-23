@@ -1,7 +1,7 @@
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
 import { sha256 } from 'js-sha256';
-import { getProgram } from './solanaClient';
+import { getSolanaProgram } from './solanaClient';
 import { web3 } from '@project-serum/anchor';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { SystemProgram, Transaction, PublicKey, Connection, clusterApiUrl } from '@solana/web3.js';
@@ -97,7 +97,7 @@ async function submitAndVerifyArticle(
   wallet: WalletContextState
 ) {
   try {
-    const program = getProgram();
+    const program = getSolanaProgram();
     if (!program) {
       throw new Error('Failed to get program');
     }
