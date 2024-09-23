@@ -11,7 +11,7 @@ import { verifyArticle } from '../lib/articleVerification';
 import AlertPopup from './AlertPopUp';
 import { queryContentRatings } from '../lib/queryContentRatings';
 import { getPDAFromContentHash, generateContentHash } from '../lib/articleVerification';
-import { getProgram } from '../lib/solanaClient';
+import { getSolanaProgram } from '../lib/solanaClient';
 import { Program, Idl } from '@project-serum/anchor';
 import { toast } from 'react-toastify';
 
@@ -167,7 +167,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   useEffect(() => {
     const fetchRatings = async () => {
       if (wallet.connected && wallet.publicKey && onChainVerification) {
-        const program = getProgram();
+        const program = getSolanaProgram();
         if (!program) {
           console.error('Failed to get program');
           return;
