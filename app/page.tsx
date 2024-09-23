@@ -82,7 +82,9 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
-      <WarningBanner />
+      <div className="sticky top-0 z-50">
+        <WarningBanner />
+      </div>
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Byte Media</h1>

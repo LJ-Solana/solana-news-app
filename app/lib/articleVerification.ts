@@ -1,4 +1,3 @@
-import { supabase } from './supabaseClient';
 import * as ed from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
 import { sha256 } from 'js-sha256';
@@ -227,19 +226,28 @@ export async function verifyArticle(
     }
     console.log('Wallet public key:', wallet.publicKey.toBase58());
 
-    // Ensure the article has a slug
-    const articleData = {
-      ...article,
-      slug: article.slug || createSlug(article.title),
-    };
+    // Step 1: Call the backend API to verify the article and update the database
+    const backendResponse = await fetch('/api/verify-article', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        article,
+        walletAddress,
+        signature,
+      }),
+    });
 
-    if (!articleData.slug) {
-      throw new Error('Slug is required for article verification');
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json();
+      throw new Error(`Backend verification failed: ${errorData.message}`);
     }
 
-    // Step 1: On-chain verification
+    const { contentHash } = await backendResponse.json();
+
+    // Step 2: Perform on-chain verification
     console.log('Starting on-chain verification');
-    const contentHash = generateContentHash(articleData);
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
       true, 
@@ -248,77 +256,27 @@ export async function verifyArticle(
     );
     console.log('On-chain verification completed:', onChainSignature);
 
-    // Step 2: Database update
-    console.log('Starting database update');
-    const verificationData = {
-      slug: articleData.slug,
-      verified: true,
-      signature: signature,
-      author: articleData.author,
-      title: articleData.title,
-      description: articleData.description || '',
-      published_at: articleData.publishedAt,
-      url_to_image: articleData.urlToImage || null,
-      on_chain_verification: onChainSignature,
-      content_hash: contentHash,
-      verified_by: walletAddress,
-      verified_at: new Date().toISOString(),
-      content: articleData.content || '',
-      source_url: articleData.sourceUrl || '',
-    };
+    // Step 3: Confirm verification and update article status
+    const confirmResponse = await fetch('/api/confirm-verification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        slug: article.slug || createSlug(article.title), 
+        onChainSignature 
+      }),
+    });
 
-    console.log('Full verification data:', JSON.stringify(verificationData, null, 2));
-
-    // Insert new article
-    const { data: insertedData, error: insertError } = await supabase
-      .from('articles')
-      .insert(verificationData)
-      .select();
-
-    if (insertError) {
-      console.error('Error inserting article:', insertError);
-      throw insertError;
+    if (!confirmResponse.ok) {
+      const errorData = await confirmResponse.json();
+      throw new Error(errorData.error || 'Failed to confirm article verification');
     }
 
-    console.log('Supabase insert response:', { insertedData, insertError });
-
-    if (!insertedData || insertedData.length === 0) {
-      console.warn('Article inserted but no data returned. This might indicate a silent failure.');
-    }
-
-    // Retry fetching the article
-    let insertedArticle = null;
-    for (let i = 0; i < 3; i++) {
-      const { data: fetchedArticle, error: fetchError } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('slug', verificationData.slug)
-        .single();
-
-      if (fetchedArticle) {
-        insertedArticle = fetchedArticle;
-        break;
-      }
-
-      if (fetchError) {
-        console.error(`Attempt ${i + 1} to fetch inserted article failed:`, fetchError);
-      }
-
-      console.log(`Attempt ${i + 1} to fetch inserted article failed. Retrying...`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retrying
-    }
-
-    if (!insertedArticle) {
-      console.error('Failed to fetch the inserted article after multiple attempts');
-      return { success: false, message: 'Article verified but could not be retrieved from the database' };
-    }
-
-    console.log('Successfully inserted and retrieved article:', insertedArticle);
-
-    return { success: true, message: 'Article submitted and verified on-chain and off-chain', onChainSignature };
+    const { message: confirmMessage } = await confirmResponse.json();
+    return { success: true, message: confirmMessage || 'Article verified successfully', onChainSignature };
   } catch (error: unknown) {
     console.error('Error in verifyArticle:', error);
-    
     if (error instanceof Error) {
       // Handling custom program error codes for on-chain verification
       if (error.message.includes('custom program error: 0x1772') || 
