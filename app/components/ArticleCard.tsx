@@ -63,6 +63,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [imageError, setImageError] = useState(false);
   const [rating, setRating] = useState<number | null>(null); 
+  const [programInitialized, setProgramInitialized] = useState(false);
 
   const fetchVerificationStatus = useCallback(async () => {
     try {
@@ -99,9 +100,27 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     fetchVerificationStatus();
   }, [fetchVerificationStatus]);
 
+  useEffect(() => {
+    async function initializeProgram() {
+      try {
+        await initializeProgram(); 
+        setProgramInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize Solana program:', error);
+      }
+    }
+
+    initializeProgram();
+  }, []);
+
   const handleVerification = async () => {
     if (!wallet.connected || !wallet.publicKey) {
       toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!programInitialized) {
+      console.error('Solana program not initialized');
       return;
     }
 
@@ -163,7 +182,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   };
 
- 
   useEffect(() => {
     const fetchRatings = async () => {
       if (wallet.connected && wallet.publicKey && onChainVerification) {
