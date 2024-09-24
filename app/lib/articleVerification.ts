@@ -19,6 +19,12 @@ const SPL_TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss6
 console.log('Initializing ed.etc.sha512Sync');
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
+// Add this function at the beginning of the file
+async function ensureProgramInitialized(wallet: WalletContextState) {
+  await initializeSolanaProgram(wallet);
+}
+
+
 function createSlug(title: string): string {
   return slugify(title, { lower: true, strict: true });
 }
@@ -98,11 +104,10 @@ async function submitAndVerifyArticle(
   wallet: WalletContextState
 ) {
   try {
-    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
-    
-    await initializeSolanaProgram(wallet as unknown as any, connection); // Ensure the program is initialized
+    await ensureProgramInitialized(wallet);
 
     const program = getSolanaProgram();
+    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
     if (!program) {
       throw new Error('Failed to get program');
     }
@@ -226,8 +231,7 @@ export async function verifyArticle(
     }
     console.log('Wallet public key:', wallet.publicKey.toBase58());
 
-    const connection = new Connection(clusterApiUrl('devnet'), 'confirmed'); // Define connection here
-    await initializeSolanaProgram(wallet as unknown as any, connection); // Ensure the program is initialized
+    await ensureProgramInitialized(wallet);
 
     // Generate content hash and PDA on the frontend
     const contentHash = generateContentHash(article);

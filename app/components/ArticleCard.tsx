@@ -11,7 +11,7 @@ import { verifyArticle } from '../lib/articleVerification';
 import AlertPopup from './AlertPopUp';
 import { queryContentRatings } from '../lib/queryContentRatings';
 import { getPDAFromContentHash, generateContentHash } from '../lib/articleVerification';
-import { getSolanaProgram } from '../lib/solanaClient';
+import { getSolanaProgram, initializeSolanaProgram } from '../lib/solanaClient';
 import { Program, Idl, } from '@project-serum/anchor';
 import { toast } from 'react-toastify';
 
@@ -63,6 +63,22 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [imageError, setImageError] = useState(false);
   const [rating, setRating] = useState<number | null>(null); 
+  const [isProgramInitialized, setIsProgramInitialized] = useState(false);
+
+  useEffect(() => {
+    const initializeProgram = async () => {
+      if (wallet.connected && wallet.publicKey) {
+        try {
+          await initializeSolanaProgram(wallet);
+          setIsProgramInitialized(true);
+        } catch (error) {
+          console.error('Failed to initialize Solana program:', error);
+        }
+      }
+    };
+
+    initializeProgram();
+  }, [wallet.connected, wallet.publicKey, wallet]);
 
   const fetchVerificationStatus = useCallback(async () => {
     try {
@@ -165,15 +181,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 
   useEffect(() => {
     const fetchRatings = async () => {
-      if (wallet.connected && wallet.publicKey && onChainVerification) {
-        const program = getSolanaProgram();
-        if (!program) {
-          console.error('Failed to get program');
-          return;
-        }
-        const contentHash = generateContentHash({ title, content: description });
-        const contentPDA = getPDAFromContentHash(contentHash);
+      if (wallet.connected && wallet.publicKey && onChainVerification && isProgramInitialized) {
         try {
+          const program = getSolanaProgram();
+          const contentHash = generateContentHash({ title, content: description });
+          const contentPDA = getPDAFromContentHash(contentHash);
           const { averageRating } = await queryContentRatings(program as unknown as Program<Idl>, contentPDA);
           setRating(averageRating);
         } catch (error) {
@@ -186,7 +198,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     };
 
     fetchRatings();
-  }, [wallet.connected, wallet.publicKey, onChainVerification, title, description]);
+  }, [wallet.connected, wallet.publicKey, onChainVerification, title, description, isProgramInitialized]);
 
   const renderStars = () => {
     if (!onChainVerification) {
