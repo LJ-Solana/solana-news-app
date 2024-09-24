@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getNews } from '../lib/serverNewsFetcher';
+import { fetchNewsFromAPI } from '../lib/serverNewsFetcher';
 import { ArticleCardProps } from '../components/ArticleCard';
 
 export function useNews() {
@@ -10,7 +10,7 @@ export function useNews() {
 
   useEffect(() => {
     async function fetchNews() {
-      const newsData = await getNews();
+      const newsData = await fetchNewsFromAPI();
       console.log('Fetched news data:', newsData); 
       setArticles(newsData);
       setFeaturedArticles(newsData.slice(0, 3));

@@ -26,17 +26,6 @@ export async function fetchNewsFromAPI(): Promise<ArticleCardProps[]> {
   }
 }
 
-export async function getNews(): Promise<ArticleCardProps[]> {
-  try {
-    const articles = await fetchNewsFromAPI();
-    console.log('Fetched articles:', articles.length);
-    return articles;
-  } catch (error) {
-    console.error("Failed to fetch news:", error);
-    return []; 
-  }
-}
-
 export async function getArticleBySlug(slug: string): Promise<ArticleCardProps | null> {
   try {
     const apiUrl = new URL(`/api/articles/${slug}`, API_BASE_URL).toString();
