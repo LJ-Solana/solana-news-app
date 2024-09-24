@@ -3,26 +3,32 @@ import { ArticleCardProps } from '../components/ArticleCard';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.gulfstream.wtf';
 
-export async function fetchNewsFromAPI(): Promise<ArticleCardProps[]> {
+export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<ArticleCardProps[]> {
   try {
-    const apiUrl = new URL('/api/news', API_BASE_URL).toString();
-    console.log('Fetching news from API:', apiUrl);
-    const response = await axios.get<{ articles: ArticleCardProps[] }>(apiUrl);
-    console.log('API response:', response.data);
-    return response.data.articles;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Axios error:', error.message);
-      if (error.response) {
-        console.error('Error response:', error.response.data);
-        console.error('Error status:', error.response.status);
-      } else if (error.request) {
-        console.error('Error request:', error.request);
-      }
-    } else {
-      console.error('Unexpected error:', error);
+    console.log('Attempting to fetch news');
+    const response = await axios.get<{ articles: ArticleCardProps[] }>(`${API_BASE_URL}/api/news`, {
+      params: { page, pageSize }
+    });
+    console.log('Response received:', response.data);
+    if (response.data.articles) {
+      console.log('Fetched news successfully:', response.data.articles.length);
+      return response.data.articles;
     }
+    throw new Error('Unknown error occurred');
+  } catch (error) {
+    console.error('Error fetching news:', error);
     return [];
+  }
+}
+
+export async function getNews(): Promise<ArticleCardProps[]> {
+  try {
+    const articles = await fetchNewsFromAPI();
+    console.log('Fetched articles:', articles.length);
+    return articles;
+  } catch (error) {
+    console.error("Failed to fetch news:", error);
+    return []; 
   }
 }
 
