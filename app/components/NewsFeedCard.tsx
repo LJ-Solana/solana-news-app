@@ -10,14 +10,14 @@ const NewsFeedCard: React.FC<ArticleCardProps> = ({
   description,
   author,
   publishedAt,
-  url_to_image,
+  urlToImage,
 }) => {
   return (
     <Link href={`/article/${slug}`} className="block">
       <div className="flex items-center bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:bg-gray-700 transition-all duration-300 border border-gray-700">
         <div className="w-1/4 relative h-28">
           <Image
-            src={url_to_image || '/placeholder-image.png'}
+            src={urlToImage || '/placeholder-image.png'}
             alt={title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
