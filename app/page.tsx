@@ -13,16 +13,14 @@ import WarningBanner from './components/WarningBanner';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default function Home() {
-  const {filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles } = useNews();
+  const {filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles, hasMore } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [verifiedArticles, setVerifiedArticles] = useState<[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [cardType, setCardType] = useState('grid'); 
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  
+
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
   };
@@ -74,13 +72,8 @@ export default function Home() {
   };
 
   const loadMoreArticles = useCallback(async () => {
-    const newArticles = await fetchMoreArticles(page + 1);
-    if (newArticles.length === 0) {
-      setHasMore(false);
-    } else {
-      setPage(prevPage => prevPage + 1);
-    }
-  }, [page, fetchMoreArticles]);
+    await fetchMoreArticles();
+  }, [fetchMoreArticles]);
 
   const displayedArticles = useMemo(() => {
     if (searchTerm) {
@@ -217,13 +210,18 @@ export default function Home() {
               Verified
             </button>
           </div>
-         <InfiniteScroll
-          dataLength={displayedArticles.length}
-          next={loadMoreArticles}
-          hasMore={hasMore}
-          loader={<h4 className="text-center text-gray-400 my-4">Loading more articles...</h4>}
-          endMessage={<p className="text-center text-gray-400 my-4">No more articles to load.</p>}
-        >
+          <InfiniteScroll
+            dataLength={filteredArticles.length}
+            next={loadMoreArticles}
+            hasMore={hasMore}
+            loader={
+              <div className="text-center text-gray-400 mt-16">
+                <span className="inline-block animate-spin mr-2">🚀</span>
+                <span>Fetching more bytes...</span>
+              </div>
+            }
+            endMessage={<p className="text-center text-gray-400 my-4">No more articles to load.</p>}
+          >
           {cardType === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {displayedArticles.map(article => (
