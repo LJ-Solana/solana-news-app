@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { fetchNewsFromAPI } from '../lib/serverNewsFetcher';
-import { ArticleCardProps } from '../components/ArticleCard';
+import { useState, useEffect, useCallback } from 'react';
+import { fetchNewsFromAPI, ArticleCardProps } from '../lib/serverNewsFetcher';
 
 export function useNews() {
   const [articles, setArticles] = useState<ArticleCardProps[]>([]);
@@ -11,7 +10,7 @@ export function useNews() {
   useEffect(() => {
     async function fetchNews() {
       const newsData = await fetchNewsFromAPI();
-      console.log('Fetched news data:', newsData); 
+      console.log('Fetched news data:', newsData);
       setArticles(newsData);
       setFeaturedArticles(newsData.slice(0, 3));
       setFilteredArticles(newsData);
@@ -27,11 +26,25 @@ export function useNews() {
     }
   }, [articles, selectedCategory]);
 
+  const fetchMoreArticles = useCallback(async (page: number) => {
+    const newArticles = await fetchNewsFromAPI(page);
+    setArticles(prevArticles => [...prevArticles, ...newArticles]);
+    setFilteredArticles(prevFiltered => {
+      if (selectedCategory) {
+        return [...prevFiltered, ...newArticles.filter(article => article.category === selectedCategory)];
+      } else {
+        return [...prevFiltered, ...newArticles];
+      }
+    });
+    return newArticles;
+  }, [selectedCategory]);
+
   return {
     articles,
     featuredArticles,
     filteredArticles,
     selectedCategory,
     setSelectedCategory,
+    fetchMoreArticles
   };
 }

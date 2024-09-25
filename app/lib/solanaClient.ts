@@ -16,12 +16,13 @@ export async function initializeSolanaProgram(wallet: WalletContextState): Promi
       const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
       const provider = new AnchorProvider(
         connection,
-        wallet as any,
+        
+        wallet as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         { preflightCommitment: 'processed' }
       );
       const programId = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
       
-      programInstance = new Program(IDL as any, programId, provider);
+      programInstance = new Program(IDL as any, programId, provider);// eslint-disable-line @typescript-eslint/no-explicit-any
       console.log('Solana program initialized:', programInstance);
     })();
   }

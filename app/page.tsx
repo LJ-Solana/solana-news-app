@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ArticleCard from './components/ArticleCard';
 import NewsFeedCard from './components/NewsFeedCard';
@@ -10,15 +10,18 @@ import { useNews } from './lib/useNews';
 import USDCBalanceButton from './components/USDCBalanceButton';
 import { supabase } from './lib/supabaseClient';
 import WarningBanner from './components/WarningBanner';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default function Home() {
-  const {filteredArticles, selectedCategory, setSelectedCategory } = useNews();
+  const {filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [verifiedArticles, setVerifiedArticles] = useState<[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [cardType, setCardType] = useState('grid'); 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
@@ -69,6 +72,15 @@ export default function Home() {
       setSearchResults(data as any);
     }
   };
+
+  const loadMoreArticles = useCallback(async () => {
+    const newArticles = await fetchMoreArticles(page + 1);
+    if (newArticles.length === 0) {
+      setHasMore(false);
+    } else {
+      setPage(prevPage => prevPage + 1);
+    }
+  }, [page, fetchMoreArticles]);
 
   const displayedArticles = useMemo(() => {
     if (searchTerm) {
@@ -205,6 +217,13 @@ export default function Home() {
               Verified
             </button>
           </div>
+         <InfiniteScroll
+          dataLength={displayedArticles.length}
+          next={loadMoreArticles}
+          hasMore={hasMore}
+          loader={<h4 className="text-center text-gray-400 my-4">Loading more articles...</h4>}
+          endMessage={<p className="text-center text-gray-400 my-4">No more articles to load.</p>}
+        >
           {cardType === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {displayedArticles.map(article => (
@@ -218,6 +237,7 @@ export default function Home() {
               ))}
             </div>
           )}
+        </InfiniteScroll>
         </section>
       </div>
       <footer className="bg-gradient-to-r from-gray-900 to-black text-gray-300 py-12">

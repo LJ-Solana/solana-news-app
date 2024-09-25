@@ -11,7 +11,6 @@ export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<Article
     console.log('Returning cached data');
     return cache.data;
   }
-
   try {
     console.log('Attempting to fetch news');
     const response = await axios.get<{ articles: ArticleCardProps[] }>(`${API_BASE_URL}/api/news`, {
@@ -21,16 +20,13 @@ export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<Article
     
     if (response.data.articles) {
       console.log('Fetched news successfully:', response.data.articles.length);
-
       // Update the cache
       cache = {
         data: response.data.articles,
         timestamp: Date.now()
       };
-
       return response.data.articles;
     }
-    
     throw new Error('Unknown error occurred');
   } catch (error) {
     console.error('Error fetching news:', error);
@@ -38,10 +34,10 @@ export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<Article
   }
 }
 
-export async function getNews(): Promise<ArticleCardProps[]> {
+export async function getNews(page = 1): Promise<ArticleCardProps[]> {
   try {
-    const articles = await fetchNewsFromAPI();
-    console.log('Fetched articles:', articles.length);
+    const articles = await fetchNewsFromAPI(page);
+    console.log(`Fetched ${articles.length} articles for page ${page}`);
     return articles;
   } catch (error) {
     console.error("Failed to fetch news:", error);

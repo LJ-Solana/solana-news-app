@@ -33,8 +33,8 @@ export default function ArticlePage() {
       }
       setLoading(false);
     }
-
     fetchArticle();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const expandDescription = async (description: string) => {
@@ -139,7 +139,6 @@ export default function ArticlePage() {
             <span>Rate Contribution</span>
           </button>
         </div>
-       
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
           <div className="mb-8">
             <h3 className="text-2xl font-semibold mb-4 flex items-center">
@@ -152,6 +151,14 @@ export default function ArticlePage() {
               <p>Article not yet verified, add a contribution now with the button above. ☝️</p>
             )}
           </div>
+        <div className="mb-8">
+            <h3 className="text-2xl font-semibold mb-4 flex items-center">
+              <FaChartLine className="mr-2 text-yellow-400" />
+              <span>On-Chain Score</span>
+            </h3>
+            {/* Add on-chain score content here */}
+        </div>
+       
           {expandedDescription && (
             <div className="mb-8">
               <h3 className="text-2xl font-semibold mb-4 flex items-center">
@@ -161,15 +168,7 @@ export default function ArticlePage() {
               <p>{expandedDescription}</p>
             </div>
           )}
-          <div className="mb-8">
-            <h3 className="text-2xl font-semibold mb-4 flex items-center">
-              <FaChartLine className="mr-2 text-yellow-400" />
-              <span>On-Chain Score</span>
-            </h3>
-            {/* Add on-chain score content here */}
-          </div>
         </div>
-        
       </main>
     </div>
   );
