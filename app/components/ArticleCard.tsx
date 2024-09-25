@@ -243,7 +243,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
               </div>
             </div>
             <div className="text-xs text-gray-300 flex items-center justify-between">
-              <span>Source: {source?.name || 'Unknown'}</span>
+              <span>Source: {source_url}</span>
               <span>{icon} {category}</span>
             </div>
             <div className="text-xs flex justify-between mt-2">
