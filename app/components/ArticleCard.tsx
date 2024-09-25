@@ -131,6 +131,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       const articleData = {
         title,
         content: description,
+        source: source.name,
         sourceUrl: source_url,
         author,
         publishedAt,
@@ -242,7 +243,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
               </div>
             </div>
             <div className="text-xs text-gray-300 flex items-center justify-between">
-              <span>Source: {source && typeof source === 'object' && 'name' in source ? source.name : 'Unknown'}</span>
+              <span>Source: {source?.name || 'Unknown'}</span>
               <span>{icon} {category}</span>
             </div>
             <div className="text-xs flex justify-between mt-2">
