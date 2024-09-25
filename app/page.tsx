@@ -88,7 +88,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Byte News</h1>
-          <p className="text-xl text-gray-300"><strong>Open Source</strong> for Cutting-Edge News</p>
+          <p className="text-xl text-gray-300"><strong>Open Source</strong> for Cutting-Edge Updates</p>
         </header> 
         <div className="relative z-50 mb-8">
           <button 
@@ -224,8 +224,8 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-between">
             <div className="w-full md:w-1/3 mb-8 md:mb-0">
-              <h3 className="text-2xl font-bold mb-4">Byte Media</h3>
-              <p className="text-gray-400">Delivering byte-sized tech and science updates.</p>
+              <h3 className="text-2xl font-bold mb-4">Byte News</h3>
+              <p className="text-gray-400">Open Source for Cutting-Edge Updates.</p>
             </div>
             <div className="w-full md:w-1/3">
               <h3 className="text-2xl font-bold mb-4">Stay Connected</h3>
