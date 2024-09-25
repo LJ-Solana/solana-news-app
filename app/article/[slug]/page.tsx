@@ -89,16 +89,26 @@ export default function ArticlePage() {
         </Link>
         <h1 className="text-5xl font-bold mb-6 leading-tight">{article.title}</h1>
         <div className="border-t border-b border-gray-700 py-4 mb-8">
-          <p className="text-gray-400 flex items-center justify-between">
+          <div className="text-gray-400 flex items-center justify-between">
             <span className="flex items-center">
               <FaUser className="mr-2 text-gray-300" />
               <span className="font-semibold">{article.author}</span>
             </span>
-            <span className="flex items-center">
-              <FaCalendarAlt className="mr-2 text-gray-300" />
-              <span>{article.published_at ? new Date(article.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not available'}</span>
-            </span>
-          </p>
+            <div className="flex items-center">
+              <span className="flex items-center mr-4">
+                <FaCalendarAlt className="mr-2 text-gray-300" />
+                <span>{article.published_at ? new Date(article.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not available'}</span>
+              </span>
+              {article.source_url && (
+                <span className="flex items-center">
+                  <FaLink className="mr-2 text-blue-300" />
+                  <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                    Source URL
+                  </a>
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         {article.url_to_image && (
           <div className="mb-8 relative w-full h-96">
@@ -129,21 +139,18 @@ export default function ArticlePage() {
             <span>Rate Contribution</span>
           </button>
         </div>
-        {article.source_url && (
-          <p className="text-blue-400 mb-8 flex items-center">
-            <FaLink className="mr-2 text-blue-300" />
-            <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-              Source URL
-            </a>
-          </p>
-        )}
+       
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
           <div className="mb-8">
             <h3 className="text-2xl font-semibold mb-4 flex items-center">
               <FaHandsHelping className="mr-2 text-blue-400" />
               <span>Contribution</span>
             </h3>
-            <p>{article.description}</p>
+            {article.contribution ? (
+              <p>{article.contribution}</p>
+            ) : (
+              <p>Article not yet verified, add a contribution now with the button above. ☝️</p>
+            )}
           </div>
           {expandedDescription && (
             <div className="mb-8">
