@@ -237,7 +237,7 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-12 text-center text-gray-500">
-            <p>&copy; 2024 Byte Media. All rights reserved.</p>
+            <p>&copy; 2024 Byte News. All rights reserved.</p>
           </div>
         </div>
       </footer>
