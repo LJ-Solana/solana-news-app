@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaStar } from 'react-icons/fa';
@@ -28,7 +28,7 @@ export interface ArticleCardProps {
   };
   category: string;
   icon: string;
-  url_to_image: string | null;
+  urlToImage: string | null;
   featured?: boolean;
   verifiedBy?: string;
   summary?: string;
@@ -37,7 +37,7 @@ export interface ArticleCardProps {
   onUpdate?: (updatedArticle: ArticleCardProps) => void;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ 
+const ArticleCard: React.FC<ArticleCardProps> = memo(({ 
   slug,
   title, 
   description, 
@@ -46,7 +46,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   source, 
   category, 
   icon, 
-  url_to_image,
+  urlToImage,
   source_url,
   featured = false,
   onUpdate,
@@ -134,7 +134,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         sourceUrl: source_url,
         author,
         publishedAt,
-        urlToImage: url_to_image ?? '',
+        urlToImage: urlToImage ?? '',
         description,
         slug,
       };
@@ -200,7 +200,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
     fetchRatings();
   }, [wallet.connected, wallet.publicKey, onChainVerification, title, description, isProgramInitialized]);
 
-  const renderStars = () => {
+  const renderStars = useCallback(() => {
     if (!onChainVerification) {
       return <span className="text-gray-400 text-xs">Not Verified On-Chain</span>;
     }
@@ -213,14 +213,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
         className={`text-xl ${index < rating ? 'text-yellow-400' : 'text-gray-600'}`} 
       />
     ));
-  };
+  }, [onChainVerification, rating]);
 
   return (
     <>
       <div className="bg-gray-800 rounded-lg shadow-xlg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-700 flex flex-col h-full">
           <div className="relative w-full h-48">
             <Image
-              src={!imageError && url_to_image ? url_to_image : '/placeholder-image.png'}
+              src={!imageError && urlToImage ? urlToImage : '/placeholder-image.png'}
               alt={title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -345,6 +345,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       )}
     </>
   );
-};
+});
+
+ArticleCard.displayName = 'ArticleCard';
 
 export default ArticleCard;
