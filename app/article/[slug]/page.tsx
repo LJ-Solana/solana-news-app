@@ -222,16 +222,29 @@ export default function ArticlePage() {
         <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <button
             onClick={() => handleVerification()}
-            className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg bg-blue-800 text-blue-200 hover:bg-blue-700"
+            className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg ${
+              isVerified ? 'bg-blue-900 text-blue-300 cursor-not-allowed' : isVerifying ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-blue-800 text-blue-200 hover:bg-blue-700'
+            }`}
+            disabled={isVerified || isVerifying}
           >
-            <>
-              Contribute 0.1
-              <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block ml-2 align-text-bottom" />
-            </>
+            {isVerified ? (
+              <>
+                <FaCheckCircle className="inline-block mr-2" />
+                Verified
+              </>
+            ) : isVerifying ? (
+              'Verifying...'
+            ) : (
+              <>
+                Contribute 0.1
+                <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block ml-2 align-text-bottom" />
+              </>
+            )}
           </button>
           <button
             onClick={handleRateArticle}
             className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg bg-yellow-800 text-yellow-200 hover:bg-yellow-700 flex items-center justify-center"
+            disabled={!isVerified}
           >
             <StarIcon className="mr-2" />
             <span>Rate Contribution</span>
