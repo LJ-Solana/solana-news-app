@@ -62,16 +62,19 @@ export default function ArticlePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Failed to expand description: ${errorData.error}, ${errorData.details}`);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error}`);
       }
 
       const data = await response.json();
-      // Split the expanded description into paragraphs
+      if (!data.expandedDescription) {
+        throw new Error('Expanded description not found in response');
+      }
+
       setExpandedDescription(data.expandedDescription.split('\n\n'));
-      setLastExpandTime(now);
+      setLastExpandTime(Date.now());
     } catch (error) {
-      console.error('Error expanding description:', error);
-      setExpandedDescription(null);
+      console.error('Detailed error expanding description:', error);
+      setExpandedDescription(['Failed to load AI Fact Check. Please try again later.']);
     }
   };
 

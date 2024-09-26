@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 
 export async function POST(request: Request) {
   try {
+    console.log('Received request to expand description');
     if (!process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is not set');
       return NextResponse.json({ error: 'OpenAI API key is not configured' }, { status: 500 });
@@ -24,8 +25,11 @@ export async function POST(request: Request) {
 
     const formattedResponse = response.choices[0].message.content?.trim().split('\n\n').join('\n\n') || '';
 
+    console.log('OpenAI API response received');
+    console.log('Sending response');
     return NextResponse.json({ expandedDescription: formattedResponse });
   } catch (error) {
+    console.error('Detailed error in expand-description API:', error);
     console.error('Error in expand-description API:', error);
     return NextResponse.json({ 
       error: 'Failed to expand description', 
