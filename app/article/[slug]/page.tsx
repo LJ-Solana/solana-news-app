@@ -33,6 +33,7 @@ export default function ArticlePage() {
   const [isVerified, setIsVerified] = useState(false);
   const [verifier, setVerifier] = useState<string | undefined>(undefined);
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
+  const [showRatingInfo, setShowRatingInfo] = useState(false);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -250,7 +251,6 @@ export default function ArticlePage() {
             <span>Rate Contribution</span>
           </button>
         </div>
-        
         {/* Add this new section for verification info */}
         <div className="mb-8 p-4 bg-gray-800 rounded-lg">
           <div className="flex justify-between items-center">
@@ -278,12 +278,21 @@ export default function ArticlePage() {
             )}
           </div>
         </div>
-
+        <hr className="border-t border-gray-700 my-6" />
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
           <div className="mb-8">
-            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
-              <HandshakeIcon className="mr-2 text-blue-400" />
-              <span>Contribution</span>
+            <h3 className="text-xl sm:text-2xl font-semibold mb-4 justify-between flex items-center">
+              <div className="flex items-center">
+                <HandshakeIcon className="mr-2 text-blue-400" />
+                <span>Contribution</span>
+              </div>
+              <div className="flex items-center">
+               <InfoIcon 
+                  className="text-blue-400 cursor-pointer h-6 w-6" 
+                  onClick={() => setShowRatingInfo(!showRatingInfo)}
+                />
+                <span className="ml-2">How it Works</span>
+              </div>
             </h3>
             {article.contribution ? (
               <p className="text-base sm:text-lg leading-relaxed">{article.contribution}</p>
@@ -306,39 +315,53 @@ export default function ArticlePage() {
               </>
             )}
         </div>
-        <div className="mb-8">
-            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
-              <ShowChartIcon className="mr-2 text-yellow-400" />
-              <span>On-Chain Score</span>
-            </h3>
-            <div className="flex items-center mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon
-                  key={star}
-                  className={`h-8 w-8 ${
-                    star <= (article.averageRating || 0)
-                      ? 'text-yellow-400'
-                      : 'text-gray-400'
-                  }`}
+        <hr className="border-t border-gray-700 my-6" />
+        <div className="mb-4">
+            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <ShowChartIcon className="mr-2 text-yellow-400" />
+                <span>On-Chain Score</span>
+              </div>
+              <div className="flex items-center">
+               <InfoIcon 
+                  className="text-blue-400 cursor-pointer h-6 w-6" 
+                  onClick={() => setShowRatingInfo(!showRatingInfo)}
                 />
-              ))}
-              <span className="ml-2 text-lg">
+                <span className="ml-2">How it Works</span>
+              </div>
+            </h3>
+            <div className="flex flex-col items-center mt-16 mb-16">
+              <div className="flex justify-center mb-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <StarIcon
+                    key={star}
+                    className={`h-48 w-48 ${
+                      star <= (article.averageRating || 0)
+                        ? 'text-yellow-400'
+                        : 'text-gray-400'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xl">
                 {article.averageRating ? article.averageRating.toFixed(1) : 'Not rated yet'}
               </span>
             </div>
-            <p className="text-base sm:text-lg leading-relaxed mb-4">
+            <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
               This score represents the average rating given by contributors.
             </p>
-            <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg p-6 shadow-lg">
-              <div className="flex items-center mb-4">
-                <InfoIcon className="text-blue-400 mr-3" />
-                <h4 className="text-lg font-semibold text-blue-200">Rating System</h4>
-              </div>
-              <ul className="list-disc list-inside text-blue-100 space-y-2">
-                <li>Ratings are stored on-chain for transparency and immutability.</li>
-                <li>Contributors rate quality, accuracy, and relevance on a 1-5 star scale.</li>
-                <li>Final scores influence token rewards for both contributors and raters.</li>
-              </ul>
+            <hr className="border-t border-gray-700 mt-8" />
+            <div className="relative inline-block">
+              {showRatingInfo && (
+                <div className="absolute z-10 w-64 p-4 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg shadow-lg">
+                  <h4 className="text-lg font-semibold text-blue-200 mb-2">Rating System</h4>
+                  <ul className="list-disc list-inside text-blue-100 space-y-2">
+                    <li>Ratings are stored on-chain for transparency and immutability.</li>
+                    <li>Contributors rate quality, accuracy, and relevance on a 1-5 star scale.</li>
+                    <li>Final scores influence token rewards for both contributors and raters.</li>
+                  </ul>
+                </div>
+              )}
             </div>
         </div>
         <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
