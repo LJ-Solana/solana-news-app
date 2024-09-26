@@ -178,7 +178,7 @@ export default function ArticlePage() {
                   <p className="text-md sm:text-lg">
                     <strong>Note:</strong> Contributing requires a deposit of 0.1 NEWS token into escrow. 
                     You&apos;ll receive this back in adition to a token reward if the average rating for your contribution exceeds 3.5.
-                    If your contribution score under this you can be docked up to 10% of your deposit.
+                    If your contribution score averages under 3.5 you can be docked up to 10% of your deposit.
                   </p>
                 </div>
               </>
@@ -189,15 +189,39 @@ export default function ArticlePage() {
               <ShowChartIcon className="mr-2 text-yellow-400" />
               <span>On-Chain Score</span>
             </h3>
-            {/* Add on-chain score content here */}
+            <div className="flex items-center mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <StarIcon
+                  key={star}
+                  className={`h-8 w-8 ${
+                    star <= (article.averageRating || 0)
+                      ? 'text-yellow-400'
+                      : 'text-gray-400'
+                  }`}
+                />
+              ))}
+              <span className="ml-2 text-lg">
+                {article.averageRating ? article.averageRating.toFixed(1) : 'Not rated yet'}
+              </span>
+            </div>
+            <p className="text-base sm:text-lg leading-relaxed">
+              This score represents the average rating given by contributors.
+            </p>
+            <div className="bg-blue-900 border-l-4 border-blue-500 text-blue-100 p-4 mt-4 mb-4 rounded">
+              <p className="text-md sm:text-lg">
+                <strong>Note:</strong> Ratings are stored on-chain to ensure transparency and immutability. 
+                Contributors can rate the article&apos;s quality, accuracy, and relevance 
+                on a scale of 1 to 5 stars. The final score influences token rewards 
+                for both the article contributor and raters.
+              </p>
+            </div>
         </div>
-       
+        <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
+            <SmartToyIcon className="mr-2 text-green-400" />
+            <span>AI Fact Check</span>
+        </h3>
           {expandedDescription && (
             <div className="mb-8">
-              <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
-                <SmartToyIcon className="mr-2 text-green-400" />
-                <span>AI Fact Check</span>
-              </h3>
               {expandedDescription.map((paragraph, index) => (
                 <p key={index} className="mb-4 text-base sm:text-lg leading-relaxed">{paragraph}</p>
               ))}
