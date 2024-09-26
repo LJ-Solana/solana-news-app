@@ -12,6 +12,9 @@ import HandshakeIcon from '@mui/icons-material/Handshake';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import StarIcon from '@mui/icons-material/Star';
+import InfoIcon from '@mui/icons-material/Info';
+import CommentBox from '../../components/commentBox';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 export default function ArticlePage() {
   const { slug } = useParams();
@@ -102,13 +105,16 @@ export default function ArticlePage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <button 
-          onClick={() => router.back()} 
-          className="inline-flex items-center mb-8 text-blue-400 hover:text-blue-300 transition-colors font-medium"
-        >
-          <ArrowBackIcon className="mr-2" />
-          Back
-        </button>
+        <div className="flex justify-between items-center mb-8">
+          <button 
+            onClick={() => router.back()} 
+            className="inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors font-medium"
+          >
+            <ArrowBackIcon className="mr-2" />
+            Back
+          </button>
+          <WalletMultiButton />
+        </div>
         <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight tracking-tight">{article.title}</h1>
         <div className="border-t border-b border-gray-700 py-4 mb-8">
           <div className="text-gray-400 flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -174,12 +180,16 @@ export default function ArticlePage() {
                 <p className="text-base sm:text-lg leading-relaxed mb-4">
                   Article not yet verified. Add a contribution now with the button above. ☝️
                 </p>
-                <div className="bg-blue-900 border-l-4 border-blue-500 text-blue-100 p-4 mb-4 rounded">
-                  <p className="text-md sm:text-lg">
-                    <strong>Note:</strong> Contributing requires a deposit of 0.1 NEWS token into escrow. 
-                    You&apos;ll receive this back in adition to a token reward if the average rating for your contribution exceeds 3.5.
-                    If your contribution score averages under 3.5 you can be docked up to 10% of your deposit.
-                  </p>
+                <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg p-6 shadow-lg">
+                  <div className="flex items-center mb-4">
+                    <InfoIcon className="text-blue-400 mr-3" />
+                    <h4 className="text-lg font-semibold text-blue-200">Contribution Process</h4>
+                  </div>
+                  <ul className="list-disc list-inside text-blue-100 space-y-2">
+                    <li>Contributing requires a deposit of 0.1 NEWS token into escrow.</li>
+                    <li>Receive your deposit back plus a token reward if your average rating exceeds 3.5.</li>
+                    <li>Risk up to 10% of your deposit for contributions scoring under 3.5.</li>
+                  </ul>
                 </div>
               </>
             )}
@@ -204,16 +214,19 @@ export default function ArticlePage() {
                 {article.averageRating ? article.averageRating.toFixed(1) : 'Not rated yet'}
               </span>
             </div>
-            <p className="text-base sm:text-lg leading-relaxed">
+            <p className="text-base sm:text-lg leading-relaxed mb-4">
               This score represents the average rating given by contributors.
             </p>
-            <div className="bg-blue-900 border-l-4 border-blue-500 text-blue-100 p-4 mt-4 mb-4 rounded">
-              <p className="text-md sm:text-lg">
-                <strong>Note:</strong> Ratings are stored on-chain to ensure transparency and immutability. 
-                Contributors can rate the article&apos;s quality, accuracy, and relevance 
-                on a scale of 1 to 5 stars. The final score influences token rewards 
-                for both the article contributor and raters.
-              </p>
+            <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg p-6 shadow-lg">
+              <div className="flex items-center mb-4">
+                <InfoIcon className="text-blue-400 mr-3" />
+                <h4 className="text-lg font-semibold text-blue-200">Rating System</h4>
+              </div>
+              <ul className="list-disc list-inside text-blue-100 space-y-2">
+                <li>Ratings are stored on-chain for transparency and immutability.</li>
+                <li>Contributors rate quality, accuracy, and relevance on a 1-5 star scale.</li>
+                <li>Final scores influence token rewards for both contributors and raters.</li>
+              </ul>
             </div>
         </div>
         <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
@@ -228,6 +241,7 @@ export default function ArticlePage() {
             </div>
           )}
         </div>
+        <CommentBox articleId={article.id} />
       </main>
       <footer className="bg-gradient-to-r from-gray-900 to-black text-gray-300 py-12">
         <div className="container mx-auto px-4">
