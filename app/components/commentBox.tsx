@@ -55,6 +55,10 @@ const CommentBox: React.FC<CommentBoxProps> = ({ articleId }) => {
     }
   };
 
+  const generateRandomColor = () => {
+    return `#${Math.floor(Math.random()*16777215).toString(16)}`;
+  };
+
   return (
     <div className="mt-8">
       <h3 className="text-xl font-semibold mb-4 flex items-center">
@@ -82,11 +86,23 @@ const CommentBox: React.FC<CommentBoxProps> = ({ articleId }) => {
       )}
       <div className="space-y-4">
         {comments.map((comment) => (
-          <div key={comment.id} className="bg-gray-800 p-4 rounded-md">
-            <p className="text-sm text-gray-400 mb-2">
-              {comment.user_address.slice(0, 6)}...{comment.user_address.slice(-4)} • {new Date(comment.created_at).toLocaleString()}
-            </p>
-            <p className="text-white">{comment.content}</p>
+          <div key={comment.id} className="bg-gray-800 p-4 rounded-md flex">
+            <div className="mr-4">
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: generateRandomColor(),
+                }}
+              />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-2">
+                {comment.user_address.slice(0, 6)}...{comment.user_address.slice(-4)} • {new Date(comment.created_at).toLocaleString()}
+              </p>
+              <p className="text-white">{comment.content}</p>
+            </div>
           </div>
         ))}
       </div>
