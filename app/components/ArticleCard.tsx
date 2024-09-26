@@ -131,7 +131,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       const articleData = {
         title,
         content: description,
-        source: source.name,
+        source: source,
         sourceUrl: source_url,
         author,
         publishedAt,
@@ -185,7 +185,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       if (wallet.connected && wallet.publicKey && onChainVerification && isProgramInitialized) {
         try {
           const program = getSolanaProgram();
-          const contentHash = generateContentHash({ title, content: description });
+          const contentHash = generateContentHash({title, description});
           const contentPDA = getPDAFromContentHash(contentHash);
           const { averageRating } = await queryContentRatings(program as unknown as Program<Idl>, contentPDA);
           setRating(averageRating);
@@ -243,8 +243,8 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
               </div>
             </div>
             <div className="text-xs text-gray-300 flex items-center justify-between">
-              <span>Source: {source_url}</span>
-              <span>{icon} {category}</span>
+              <span>Source: {source.name}</span>
+              <span>{icon && typeof icon === 'string' ? icon : null} {category}</span>
             </div>
             <div className="text-xs flex justify-between mt-2">
               <div className="flex flex-col">

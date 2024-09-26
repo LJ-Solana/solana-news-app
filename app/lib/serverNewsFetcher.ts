@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ArticleCardProps } from '../components/ArticleCard';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.gulfstream.wtf';
-const CACHE_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_EXPIRATION_TIME = 5 * 60 * 1000; 
 let cache: { data: ArticleCardProps[], timestamp: number } | null = null;
 
 export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<ArticleCardProps[]> {

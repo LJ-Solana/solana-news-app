@@ -1,10 +1,9 @@
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { web3 } from '@project-serum/anchor';
-import { supabase } from './supabaseClient';
-import { PublicKey } from '@solana/web3.js';
 import { toast } from 'react-toastify'; 
 import { getSolanaProgram } from './solanaClient';
 import { SendTransactionError } from '@solana/web3.js';
+import { generateContentHash, getPDAFromContentHash } from './articleVerification';
 
 export const rateContent = async (articleData: { title: string; content: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
@@ -29,6 +28,14 @@ export const rateContent = async (articleData: { title: string; content: string 
   console.log('Program accounts:', Object.keys(program.account));
   console.log('Full program.account object:', program.account);
 
+  // Use the same content hash generation as in articleVerification
+  const contentHash = generateContentHash(articleData);
+  console.log('Generated content hash:', contentHash);
+
+  // Use the same PDA derivation as in articleVerification
+  const contentPDA = getPDAFromContentHash(contentHash);
+  console.log('Content PDA for rating:', contentPDA.toBase58());
+
   // Check for both 'Content' and 'content'
   if (!program.account.Content && !program.account.content) {
     console.error('Content account not found in program');
@@ -43,35 +50,6 @@ export const rateContent = async (articleData: { title: string; content: string 
     throw new Error("Invalid rating. Must be between 1 and 5.");
   }
 
-  console.log('Fetching content hash from Supabase');
-  const { data, error } = await supabase
-    .from('articles')
-    .select('content_hash')
-    .eq('title', articleData.title)
-    .single();
-
-  if (error) {
-    console.error('Error fetching content hash:', error);
-    throw new Error(`Error fetching content hash: ${error.message}`);
-  }
-
-  if (!data || !data.content_hash) {
-    console.error('Content hash not found for article:', articleData.title);
-    throw new Error('Content hash not found for the article');
-  }
-
-  console.log('Content hash from Supabase:', data.content_hash);
-  const contentHash = new Uint8Array(Buffer.from(data.content_hash, 'hex'));
-  console.log('Content hash as Uint8Array:', contentHash);
-
-  console.log('Deriving content PDA');
-  const [contentPDA] = await PublicKey.findProgramAddress(
-    [Buffer.from("content"), contentHash],
-    program.programId
-  );
-
-  console.log('Content PDA for rating:', contentPDA.toBase58());
-
   try {
     console.log('Fetching content account');
     const contentAccount = await ContentAccount.fetchNullable(contentPDA);
@@ -79,7 +57,7 @@ export const rateContent = async (articleData: { title: string; content: string 
     if (contentAccount) {
       console.log('Content account exists:', contentAccount);
       console.log('Creating transaction for rating content');
-      const tx = await program.methods.rateContent(Array.from(contentHash), rating)
+      const tx = await program.methods.rateContent(Array.from(Buffer.from(contentHash, 'hex')), rating)
         .accounts({
           content: contentPDA,
           rater: publicKey,
@@ -112,7 +90,7 @@ export const rateContent = async (articleData: { title: string; content: string 
       return txid;
     } else {
       console.log('Content account does not exist');
-      throw new Error('Content account does not exist');
+      throw new Error('Content account does not exist. Please verify the article first.');
     }
   } catch (error) {
     console.error("Error fetching or processing content account:", error);

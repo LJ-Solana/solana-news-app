@@ -30,9 +30,9 @@ function createSlug(title: string): string {
 }
 
 // Function to generate content hash
-export function generateContentHash(articleData: { title: string; content: string }): string {
+export function generateContentHash(articleData: { title: string; description?: string }): string {
   console.log('Generating content hash for:', articleData);
-  const contentString = `${articleData.title}|${articleData.content}`;
+  const contentString = articleData.description ? `${articleData.title}|${articleData.description}` : articleData.title;
   const hash = sha256(contentString);
   console.log('Generated content hash:', hash);
   return hash;
