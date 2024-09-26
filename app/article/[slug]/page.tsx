@@ -15,15 +15,24 @@ import StarIcon from '@mui/icons-material/Star';
 import InfoIcon from '@mui/icons-material/Info';
 import CommentBox from '../../components/commentBox';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { verifyArticle } from '../../lib/articleVerification';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { toast } from 'react-toastify';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export default function ArticlePage() {
   const { slug } = useParams();
   const router = useRouter();
+  const wallet = useWallet();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [article, setArticle] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedDescription, setExpandedDescription] = useState<string[] | null>(null);
   const [lastExpandTime, setLastExpandTime] = useState<number | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifier, setVerifier] = useState<string | undefined>(undefined);
+  const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -31,7 +40,7 @@ export default function ArticlePage() {
 
       const { data, error } = await supabase
         .from('articles')
-        .select('*')
+        .select('*, verified, verified_by, on_chain_verification')
         .eq('slug', slug)
         .single();
 
@@ -40,6 +49,9 @@ export default function ArticlePage() {
       } else {
         setArticle(data);
         expandDescription(data.description);
+        setIsVerified(data.verified || data.on_chain_verification !== null);
+        setVerifier(data.verified_by);
+        setOnChainVerification(data.on_chain_verification);
       }
       setLoading(false);
     }
@@ -81,9 +93,67 @@ export default function ArticlePage() {
     }
   };
 
-  const handleVerifyArticle = () => {
-    // TODO: Implement article verification logic
-    console.log('Verify article clicked');
+  const handleVerification = async () => {
+    if (!wallet.connected || !wallet.publicKey) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const message = `Verify article: ${slug}\nSource: ${article.source_url}`;
+      const encodedMessage = new TextEncoder().encode(message);
+      const signatureBytes = await wallet.signMessage!(encodedMessage);
+      const base64Signature = Buffer.from(signatureBytes).toString('base64');
+
+      const articleData = {
+        title: article.title,
+        content: article.description,
+        source: article.source,
+        sourceUrl: article.source_url,
+        author: article.author,
+        publishedAt: article.published_at,
+        urlToImage: article.urlToImage ?? '',
+        description: article.description,
+        slug: article.slug,
+      };
+
+      const result = await verifyArticle(
+        articleData,
+        wallet.publicKey.toString(),
+        base64Signature,
+        wallet
+      );
+
+      if (result.success) {
+        setIsVerified(true);
+        // Fetch the updated article data
+        const { data: updatedArticle, error } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (error) {
+          console.error('Error fetching updated article:', error);
+          toast.error('Failed to fetch updated article data');
+        } else if (updatedArticle) {
+          setArticle(updatedArticle);
+          toast.success('Article verified successfully');
+        } else {
+          console.warn('Updated article not found');
+          toast.warning('Article verified, but updated data not found');
+        }
+      } else {
+        console.error('Verification failed:', result.message);
+        toast.error(`Verification failed: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error during verification:', error);
+      toast.error('An error occurred during verification');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleRateArticle = () => {
@@ -151,7 +221,7 @@ export default function ArticlePage() {
         )}
         <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <button
-            onClick={handleVerifyArticle}
+            onClick={() => handleVerification()}
             className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg bg-blue-800 text-blue-200 hover:bg-blue-700"
           >
             <>
@@ -167,6 +237,35 @@ export default function ArticlePage() {
             <span>Rate Contribution</span>
           </button>
         </div>
+        
+        {/* Add this new section for verification info */}
+        <div className="mb-8 p-4 bg-gray-800 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div>
+              {isVerified ? (
+                <span className="text-green-400 flex items-center">
+                  <FaCheckCircle className="mr-2" /> 
+                  Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
+                </span>
+              ) : (
+                <span className="text-red-400 flex items-center">
+                  <FaTimesCircle className="mr-2" /> Unverified
+                </span>
+              )}
+            </div>
+            {isVerified && onChainVerification && (
+              <a 
+                href={`https://solana.fm/tx/${onChainVerification}?cluster=devnet-solana`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-pink-400 hover:text-pink-300 underline"
+              >
+                On-Chain Tx: {`${onChainVerification.slice(0, 4)}...${onChainVerification.slice(-4)}`}
+              </a>
+            )}
+          </div>
+        </div>
+
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
           <div className="mb-8">
             <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
