@@ -178,11 +178,11 @@ export default function ArticlePage() {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
           <button 
-            onClick={() => router.back()} 
+            onClick={() => router.push('/')} 
             className="inline-flex items-center text-blue-400 hover:text-blue-300 transition-colors font-medium"
           >
             <ArrowBackIcon className="mr-2" />
-            Back
+            Home
           </button>
           <WalletMultiButton />
         </div>
@@ -330,21 +330,29 @@ export default function ArticlePage() {
                 <span className="ml-2">How it Works</span>
               </div>
             </h3>
-            <div className="flex flex-col items-center mt-16 mb-16">
+            <div className="flex flex-col items-center mt-16 mb-8">
               <div className="flex justify-center mb-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <StarIcon
                     key={star}
-                    className={`h-48 w-48 ${
+                    className={` ${
                       star <= (article.averageRating || 0)
                         ? 'text-yellow-400'
                         : 'text-gray-400'
                     }`}
+                    style={{ width: '64px', height: '64px' }}
                   />
                 ))}
               </div>
-              <span className="text-xl">
-                {article.averageRating ? article.averageRating.toFixed(1) : 'Not rated yet'}
+              <span className="text-xl flex items-center">
+                {article.averageRating ? (
+                  article.averageRating.toFixed(1)
+                ) : (
+                  <>
+                    <FaTimesCircle className="text-red-500 mr-2" />
+                    <span className="text-red-500">Not rated yet</span>
+                  </>
+                )}
               </span>
             </div>
             <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
@@ -368,13 +376,22 @@ export default function ArticlePage() {
             <SmartToyIcon className="mr-2 text-green-400" />
             <span>AI Fact Check</span>
         </h3>
-          {expandedDescription && (
-            <div className="mb-8">
-              {expandedDescription.map((paragraph, index) => (
-                <p key={index} className="mb-4 text-base sm:text-lg leading-relaxed">{paragraph}</p>
-              ))}
+        {!expandedDescription ? (
+          <div className="flex items-center justify-center mb-8">
+            <div className="animate-pulse">
+              <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
             </div>
-          )}
+            <span className="text-xl ml-4">Computing AI Fact Check...</span>
+          </div>
+        ) : (
+          <div className="mb-8">
+            {expandedDescription.map((paragraph, index) => (
+              <p key={index} className="mb-4 text-base sm:text-lg leading-relaxed">{paragraph}</p>
+            ))}
+          </div>
+        )}
         </div>
         <CommentBox articleId={article.id} />
       </main>
