@@ -170,9 +170,19 @@ export default function ArticlePage() {
             {article.contribution ? (
               <p className="text-base sm:text-lg leading-relaxed">{article.contribution}</p>
             ) : (
-              <p className="text-base sm:text-lg leading-relaxed">Article not yet verified, add a contribution now with the button above. ☝️</p>
+              <>
+                <p className="text-base sm:text-lg leading-relaxed mb-4">
+                  Article not yet verified. Add a contribution now with the button above. ☝️
+                </p>
+                <div className="bg-blue-900 border-l-4 border-blue-500 text-blue-100 p-4 mb-4 rounded">
+                  <p className="text-md sm:text-lg">
+                    <strong>Note:</strong> Contributing requires a deposit of 0.1 NEWS token into escrow. 
+                    You&apos;ll receive this back as well as a token reward if the average rating for your contribution exceeds 3.5.
+                  </p>
+                </div>
+              </>
             )}
-          </div>
+        </div>
         <div className="mb-8">
             <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
               <ShowChartIcon className="mr-2 text-yellow-400" />
