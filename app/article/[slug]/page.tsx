@@ -177,7 +177,8 @@ export default function ArticlePage() {
                 <div className="bg-blue-900 border-l-4 border-blue-500 text-blue-100 p-4 mb-4 rounded">
                   <p className="text-md sm:text-lg">
                     <strong>Note:</strong> Contributing requires a deposit of 0.1 NEWS token into escrow. 
-                    You&apos;ll receive this back as well as a token reward if the average rating for your contribution exceeds 3.5.
+                    You&apos;ll receive this back in adition to a token reward if the average rating for your contribution exceeds 3.5.
+                    If your contribution score under this you can be docked up to 10% of your deposit.
                   </p>
                 </div>
               </>
@@ -204,6 +205,27 @@ export default function ArticlePage() {
           )}
         </div>
       </main>
+      <footer className="bg-gradient-to-r from-gray-900 to-black text-gray-300 py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap justify-between">
+            <div className="w-full md:w-1/3 mb-8 md:mb-0">
+              <h3 className="text-2xl font-bold mb-4">Byte News</h3>
+              <p className="text-gray-400">Open Source for Cutting-Edge Updates.</p>
+            </div>
+            <div className="w-full md:w-1/3">
+              <h3 className="text-2xl font-bold mb-4">Stay Connected</h3>
+              <p className="text-gray-400 mb-4">Subscribe to our newsletter for daily byte-sized updates.</p>
+              <div className="flex">
+                <input type="email" placeholder="Enter your email" className="bg-gray-800 text-gray-200 px-4 py-2 rounded-l-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-r-md transition duration-300">Subscribe</button>
+              </div>
+            </div>
+          </div>
+          <div className="mt-12 text-center text-gray-500">
+            <p>&copy; 2024 Byte News. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
