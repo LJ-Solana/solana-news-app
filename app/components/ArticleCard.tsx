@@ -71,6 +71,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
   const [imageError, setImageError] = useState(false);
   const [rating, setRating] = useState<number | null>(null); 
   const [isProgramInitialized, setIsProgramInitialized] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sourceData, setSourceData] = useState<string | null>(null);
 
   useEffect(() => {
