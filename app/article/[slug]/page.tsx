@@ -19,6 +19,7 @@ import { verifyArticle } from '../../lib/articleVerification';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { toast } from 'react-toastify';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import RatingInformationModal from '../../components/RatingInformationModal';
 
 export default function ArticlePage() {
   const { slug } = useParams();
@@ -287,13 +288,14 @@ export default function ArticlePage() {
                 <span>Contribution</span>
               </div>
               <div className="flex items-center">
-               <InfoIcon 
+                <span className="mr-2">How it Works</span>
+                <InfoIcon 
                   className="text-blue-400 cursor-pointer h-6 w-6" 
-                  onClick={() => setShowRatingInfo(!showRatingInfo)}
+                  onClick={() => setShowRatingInfo(true)}
                 />
-                <span className="ml-2">How it Works</span>
               </div>
             </h3>
+            <RatingInformationModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} />
             {article.contribution ? (
               <p className="text-base sm:text-lg leading-relaxed">{article.contribution}</p>
             ) : (
@@ -323,11 +325,11 @@ export default function ArticlePage() {
                 <span>On-Chain Score</span>
               </div>
               <div className="flex items-center">
-               <InfoIcon 
+                <span className="mr-2">How it Works</span>
+                <InfoIcon 
                   className="text-blue-400 cursor-pointer h-6 w-6" 
                   onClick={() => setShowRatingInfo(!showRatingInfo)}
                 />
-                <span className="ml-2">How it Works</span>
               </div>
             </h3>
             <div className="flex flex-col items-center mt-16 mb-8">
@@ -359,18 +361,6 @@ export default function ArticlePage() {
               This score represents the average rating given by contributors.
             </p>
             <hr className="border-t border-gray-700 mt-8" />
-            <div className="relative inline-block">
-              {showRatingInfo && (
-                <div className="absolute z-10 w-64 p-4 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg shadow-lg">
-                  <h4 className="text-lg font-semibold text-blue-200 mb-2">Rating System</h4>
-                  <ul className="list-disc list-inside text-blue-100 space-y-2">
-                    <li>Ratings are stored on-chain for transparency and immutability.</li>
-                    <li>Contributors rate quality, accuracy, and relevance on a 1-5 star scale.</li>
-                    <li>Final scores influence token rewards for both contributors and raters.</li>
-                  </ul>
-                </div>
-              )}
-            </div>
         </div>
         <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
             <SmartToyIcon className="mr-2 text-green-400" />
@@ -388,7 +378,7 @@ export default function ArticlePage() {
         ) : (
           <div className="mb-8">
             {expandedDescription.map((paragraph, index) => (
-              <p key={index} className="mb-4 text-base sm:text-lg leading-relaxed">{paragraph}</p>
+              <p key={index} className="mb-4 text-lg sm:text-xl leading-relaxed">{paragraph}</p>
             ))}
           </div>
         )}
