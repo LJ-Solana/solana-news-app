@@ -4,17 +4,14 @@ import { supabase } from '../lib/supabaseClient';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { rateContent } from '../lib/rateVerification';
 import RatingSuccessModal from './RatingSuccessModal';
-import { toast } from 'react-toastify';
+
 
 interface RateContributionModalProps {
   isVisible: boolean;
   onClose: () => void;
   articleTitle: string;
   articleDescription: string;
-  articleSource: {
-    name: string;
-    [key: string]: string | number;
-  };
+  articleSource: { name: string };
   articleSourceUrl: string;
 }
 
@@ -22,6 +19,7 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
   isVisible,
   onClose,
   articleTitle,
+  articleDescription,
 }) => {
   const [rating, setRating] = useState(0);
   const [sourceUrl, setSourceUrl] = useState('');
@@ -51,45 +49,18 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallet.publicKey || !wallet.signTransaction) {
-      console.error('Wallet not connected');
-      toast.error('Wallet not connected', {
-        position: "bottom-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      return;
-    }
+    if (!rating) return;
 
     try {
-      const result = await rateContent({ title: articleTitle, content: '' }, rating, wallet);
-      console.log('Rating submitted successfully');
-      if (result) {
-        setTransactionHash(result);
-      }
-      setShowSuccessModal(true);
+      const articleData = {
+        title: articleTitle,
+        description: articleDescription,
+      };
+      await rateContent(articleData, rating, wallet);
       onClose();
-      toast.success('Rating submitted successfully', {
-        position: "bottom-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
     } catch (error) {
       console.error('Error submitting rating:', error);
-      toast.error('Error submitting rating: ' + (error instanceof Error ? error.message : String(error)), {
-        position: "bottom-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      // Handle error (e.g., show error message to user)
     }
   };
 

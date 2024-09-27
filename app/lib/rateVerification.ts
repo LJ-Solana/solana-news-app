@@ -5,7 +5,7 @@ import { getSolanaProgram } from './solanaClient';
 import { SendTransactionError } from '@solana/web3.js';
 import { generateContentHash, getPDAFromContentHash } from './articleVerification';
 
-export const rateContent = async (articleData: { title: string; content: string }, rating: number, wallet: WalletContextState) => {
+export const rateContent = async (articleData: { title: string; description: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
   const program = getSolanaProgram();
   const publicKey = wallet.publicKey;

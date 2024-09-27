@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '../../lib/supabaseClient';
@@ -20,6 +20,11 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { toast } from 'react-toastify';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import RatingInformationModal from '../../components/RatingInformationModal';
+import { queryContentRatings } from '../../lib/queryContentRatings';
+import { generateContentHash, getPDAFromContentHash } from '../../lib/articleVerification';
+import { getSolanaProgram } from '../../lib/solanaClient';
+import { Program, Idl } from '@project-serum/anchor';
+
 
 export default function ArticlePage() {
   const { slug } = useParams();
@@ -35,6 +40,8 @@ export default function ArticlePage() {
   const [verifier, setVerifier] = useState<string | undefined>(undefined);
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
   const [showRatingInfo, setShowRatingInfo] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
+  const [stars, setStars] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -162,6 +169,47 @@ export default function ArticlePage() {
     // TODO: Implement article rating logic
     console.log('Rate article clicked');
   };
+
+  const fetchRating = useCallback(async () => {
+    if (wallet.connected && wallet.publicKey && onChainVerification && article) {
+      try {
+        const program = getSolanaProgram();
+        const contentHash = generateContentHash({title: article.title, description: article.description});
+        const contentPDA = getPDAFromContentHash(contentHash);
+        const { averageRating } = await queryContentRatings(program as unknown as Program<Idl>, contentPDA);
+        setRating(averageRating);
+      } catch (error) {
+        console.error('Error fetching rating:', error);
+        setRating(null);
+      }
+    } else {
+      setRating(null);
+    }
+  }, [wallet.connected, wallet.publicKey, onChainVerification, article]);
+
+  useEffect(() => {
+    fetchRating();
+  }, [fetchRating]);
+
+  useEffect(() => {
+    if (!onChainVerification) {
+      setStars(<span className="text-gray-400 text-xs">Not Verified On-Chain</span>);
+    } else if (rating === null) {
+      setStars(<span className="text-gray-400 text-xs">No Ratings Yet</span>);
+    } else {
+      setStars(
+        <>
+          {Array(5).fill(0).map((_, index) => (
+            <StarIcon 
+              key={index} 
+              className={`${index < rating ? 'text-yellow-400' : 'text-gray-600'}`}
+              style={{ width: '64px', height: '64px' }}
+            />
+          ))}
+        </>
+      );
+    }
+  }, [onChainVerification, rating]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white font-sans">
@@ -293,8 +341,15 @@ export default function ArticlePage() {
               </div>
             </h3>
             <RatingInformationModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} />
-            {article.contribution ? (
-              <p className="text-base sm:text-lg leading-relaxed">{article.contribution}</p>
+            {isVerified ? (
+              <>
+                {article.sourceData && (
+                  <div className="mt-4">
+                    <h4 className="text-lg font-semibold mb-2">Source Data:</h4>
+                    <p className="text-base sm:text-lg leading-relaxed">{article.sourceData}</p>
+                  </div>
+                )}
+              </>
             ) : (
               <>
                 <p className="text-base sm:text-lg leading-relaxed mb-4">
@@ -330,29 +385,21 @@ export default function ArticlePage() {
               </div>
             </h3>
             <div className="flex flex-col items-center mt-16 mb-8">
+            <div className="flex flex-col items-center mt-16 mb-8">
               <div className="flex justify-center mb-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <StarIcon
-                    key={star}
-                    className={` ${
-                      star <= (article.averageRating || 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-400'
-                    }`}
-                    style={{ width: '64px', height: '64px' }}
-                  />
-                ))}
+                  {stars}
+                </div>
+                <span className="text-xl flex items-center">
+                  {rating !== null ? (
+                    rating.toFixed(1)
+                  ) : (
+                    <>
+                      <FaTimesCircle className="text-red-500 mr-2" />
+                      <span className="text-red-500">Not rated yet</span>
+                    </>
+                  )}
+                </span>
               </div>
-              <span className="text-xl flex items-center">
-                {article.averageRating ? (
-                  article.averageRating.toFixed(1)
-                ) : (
-                  <>
-                    <FaTimesCircle className="text-red-500 mr-2" />
-                    <span className="text-red-500">Not rated yet</span>
-                  </>
-                )}
-              </span>
             </div>
             <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
               This score represents the average rating given by contributors.
