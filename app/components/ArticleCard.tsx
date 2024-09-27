@@ -254,8 +254,8 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
             <h2 className={`font-bold ${featured ? 'text-xl' : 'text-lg'} leading-tight text-gray-100`}>{title}</h2>
             <p className="text-sm text-gray-300 line-clamp-2">{description}</p>
             <div className="flex justify-between items-center text-xs text-gray-400">
-              <span className="flex items-center"><FaUser className="mr-1" /> {author}</span>
-              <span className="flex items-center"><FaCalendar className="mr-1" /> {new Date(publishedAt).toLocaleDateString()}</span>
+              <span className="flex items-center"><FaUser className="mr-1 text-blue-400" /> {author}</span>
+              <span className="flex items-center"><FaCalendar className="mr-1 text-blue-600" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-gray-300">⛓️ On-Chain Score: </span>
@@ -264,7 +264,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
               </div>
             </div>
             <div className="text-xs text-gray-300 flex items-center justify-between">
-              <span>Source: {source.name}</span>
+              <span>Source: {source_url}</span>
               <span>{icon && typeof icon === 'string' ? icon : null} {category}</span>
             </div>
             <div className="text-xs flex justify-between mt-2">
