@@ -71,6 +71,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
   const [imageError, setImageError] = useState(false);
   const [rating, setRating] = useState<number | null>(null); 
   const [isProgramInitialized, setIsProgramInitialized] = useState(false);
+  const [sourceData, setSourceData] = useState('');
 
   useEffect(() => {
     const initializeProgram = async () => {
@@ -123,6 +124,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
   }, [fetchVerificationStatus]);
 
   const handleSourceDataSubmit = async (submittedSourceData: string) => {
+    setSourceData(submittedSourceData);
     await handleVerification(submittedSourceData);
   };
 
@@ -159,25 +161,33 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       );
 
       if (result.success) {
-        setIsVerified(true);
-        // Fetch the updated article data
-        const { data: updatedArticle, error } = await supabase
+        // Update the existing article record in Supabase
+        const { data: updatedArticle, error: updateError } = await supabase
           .from('articles')
-          .select('*')
+          .update({
+            verified: true,
+            verified_by: wallet.publicKey.toString(),
+            signature: base64Signature,
+            on_chain_verification: result.onChainSignature, 
+            verified_at: Math.floor(Date.now() / 1000),
+            verification_data: submittedSourceData 
+          })
           .eq('slug', slug)
+          .select()
           .single();
 
-        if (error) {
-          console.error('Error fetching updated article:', error);
-          toast.error('Failed to fetch updated article data');
+        if (updateError) {
+          console.error('Error updating article:', updateError);
+          toast.error('Failed to update article data');
         } else if (updatedArticle) {
+          setIsVerified(true);
           if (onUpdate && typeof onUpdate === 'function') {
             onUpdate(updatedArticle);
           }
           toast.success('Article verified successfully');
         } else {
-          console.warn('Updated article not found');
-          toast.warning('Article verified, but updated data not found');
+          console.warn('Article not found or not updated');
+          toast.warning('Verification recorded, but article data not updated');
         }
       } else {
         console.error('Verification failed:', result.message);
