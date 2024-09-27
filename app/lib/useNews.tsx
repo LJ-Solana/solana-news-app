@@ -13,11 +13,10 @@ export function useNews() {
   useEffect(() => {
     async function fetchNews() {
       const newsData = await fetchNewsFromAPI(1);
-      console.log('Fetched news data:', newsData);
+      console.log('Fetched initial news data:', newsData);
       setArticles(newsData);
       setFeaturedArticles(newsData.slice(0, 3));
       setFilteredArticles(newsData);
-      setCurrentPage(1);
     }
     fetchNews();
   }, []);
@@ -31,25 +30,17 @@ export function useNews() {
   }, [articles, selectedCategory]);
 
   const fetchMoreArticles = useCallback(async () => {
-    if (!hasMore) return [];
-    
     const nextPage = currentPage + 1;
     const newArticles = await fetchNewsFromAPI(nextPage);
     
     if (newArticles.length === 0) {
       setHasMore(false);
-      return [];
+      return;
     }
 
-    const uniqueNewArticles = newArticles.filter(
-      newArticle => !articles.some(existingArticle => existingArticle.id === newArticle.id)
-    );
-
-    setArticles(prevArticles => [...prevArticles, ...uniqueNewArticles]);
+    setArticles(prevArticles => [...prevArticles, ...newArticles]);
     setCurrentPage(nextPage);
-
-    return uniqueNewArticles;
-  }, [currentPage, hasMore, articles]);
+  }, [currentPage]);
 
   return {
     articles,
