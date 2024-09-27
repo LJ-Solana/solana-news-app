@@ -173,7 +173,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
             verified_by: wallet.publicKey.toString(),
             signature: base64Signature,
             on_chain_verification: result.onChainSignature, 
-            verified_at: Math.floor(Date.now() / 1000),
+            verified_at: new Date().toISOString(),
             verification_data: submittedSourceData 
           })
           .eq('slug', slug)
