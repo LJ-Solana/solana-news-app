@@ -210,17 +210,14 @@ export default function ArticlePage() {
             </div>
           </div>
         </div>
-        {article.url_to_image && (
-          <div className="mb-8 relative w-full h-48 sm:h-64 md:h-96">
-            <Image
-              src={article.url_to_image}
-              alt={article.title}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-lg"
-            />
-          </div>
-        )}
+        <Image
+          src={article.url_to_image || '/placeholder-image.png'}
+          alt={article.title}
+          width={1200}
+          height={630}
+          style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
+          className="rounded-lg mb-6"
+        />
         <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <button
             onClick={() => handleVerification()}
@@ -380,6 +377,17 @@ export default function ArticlePage() {
             {expandedDescription.map((paragraph, index) => (
               <p key={index} className="mb-4 text-lg sm:text-xl leading-relaxed">{paragraph}</p>
             ))}
+            <div className="mt-6 flex flex-col items-center">
+              <p className="text-lg font-semibold mb-2">Was this fact check helpful?</p>
+              <div className="flex space-x-4">
+                <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300">
+                  Yes
+                </button>
+                <button className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300">
+                  No
+                </button>
+              </div>
+            </div>
           </div>
         )}
         </div>

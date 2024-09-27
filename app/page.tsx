@@ -222,20 +222,20 @@ export default function Home() {
             }
             endMessage={<p className="text-center text-gray-400 my-4">No more articles to load.</p>}
           >
-          {cardType === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {displayedArticles.map(article => (
-                <ArticleCard key={article.id} {...article} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {displayedArticles.map(article => (
-                <NewsFeedCard key={article.id} {...article} />
-              ))}
-            </div>
-          )}
-        </InfiniteScroll>
+            {cardType === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {displayedArticles.map(article => (
+                  <ArticleCard key={article.id} {...article} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {displayedArticles.map(article => (
+                  <NewsFeedCard key={article.id} {...article} />
+                ))}
+              </div>
+            )}
+          </InfiniteScroll>
         </section>
       </div>
       <footer className="bg-gradient-to-r from-gray-900 to-black text-gray-300 py-12">

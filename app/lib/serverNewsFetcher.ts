@@ -5,6 +5,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.gulfst
 const CACHE_EXPIRATION_TIME = 5 * 60 * 1000; 
 const cache: { [page: number]: { data: ArticleCardProps[], timestamp: number } } = {};
 
+const ensureAbsoluteUrl = (url: string) => {
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  return url;
+};
+
 export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<ArticleCardProps[]> {
   // Check if cached data exists and is still valid for this page
   if (cache[page] && (Date.now() - cache[page].timestamp < CACHE_EXPIRATION_TIME)) {
@@ -19,13 +26,16 @@ export async function fetchNewsFromAPI(page = 1, pageSize = 20): Promise<Article
     console.log('Response received:', response.data);
     
     if (response.data.articles) {
-      console.log('Fetched news successfully:', response.data.articles.length);
-      // Update the cache for this page
+      const articlesWithAbsoluteUrls = response.data.articles.map(article => ({
+        ...article,
+        urlToImage: article.urlToImage ? ensureAbsoluteUrl(article.urlToImage) : null
+      }));
+      
       cache[page] = {
-        data: response.data.articles,
+        data: articlesWithAbsoluteUrls,
         timestamp: Date.now()
       };
-      return response.data.articles;
+      return articlesWithAbsoluteUrls;
     }
     throw new Error('Unknown error occurred');
   } catch (error) {

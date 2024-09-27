@@ -209,6 +209,7 @@ async function submitAndVerifyArticle(
     throw error;
   }
 }
+
 export async function verifyArticle(
   article: {
     title: string;

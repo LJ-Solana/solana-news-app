@@ -37,6 +37,13 @@ export interface ArticleCardProps {
   onUpdate?: (updatedArticle: ArticleCardProps) => void;
 }
 
+const ensureAbsoluteUrl = (url: string) => {
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  return url;
+};
+
 const ArticleCard: React.FC<ArticleCardProps> = memo(({ 
   slug,
   title, 
@@ -115,7 +122,11 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
     fetchVerificationStatus();
   }, [fetchVerificationStatus]);
 
-  const handleVerification = async () => {
+  const handleSourceDataSubmit = async (submittedSourceData: string) => {
+    await handleVerification(submittedSourceData);
+  };
+
+  const handleVerification = async (submittedSourceData: string) => {
     if (!wallet.connected || !wallet.publicKey) {
       toast.error('Please connect your wallet first');
       return;
@@ -123,7 +134,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
 
     setIsVerifying(true);
     try {
-      const message = `Verify article: ${slug}\nSource: ${source_url}`;
+      const message = `Verify article: ${slug}\nSource: ${submittedSourceData}`;
       const encodedMessage = new TextEncoder().encode(message);
       const signatureBytes = await wallet.signMessage!(encodedMessage);
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
@@ -221,7 +232,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       <div className="bg-gray-800 rounded-lg shadow-xlg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-700 flex flex-col h-full">
           <div className="relative w-full h-48">
             <Image
-              src={!imageError && urlToImage ? urlToImage : '/placeholder-image.png'}
+              src={!imageError && urlToImage ? ensureAbsoluteUrl(urlToImage) : '/placeholder-image.png'}
               alt={title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -312,7 +323,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
         <SourceDataModal
           isOpen={showSourceDataModal}
           onClose={() => setShowSourceDataModal(false)}
-          onSubmit={handleVerification}
+          onSubmit={handleSourceDataSubmit}
           articleTitle={title}
           articleSlug={slug}
         />

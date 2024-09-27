@@ -68,7 +68,7 @@ const SourceDataModal: React.FC<SourceDataModalProps> = ({ isOpen, onClose, onSu
               type="submit"
               className="px-3 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors duration-200 font-semibold text-sm sm:text-base"
             >
-              Verify Article
+              Verify Article & Deposit 0.1 $NEWS
             </button>
           </div>
         </form>
