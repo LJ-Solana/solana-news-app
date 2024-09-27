@@ -56,8 +56,9 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
         title: articleTitle,
         description: articleDescription,
       };
-      await rateContent(articleData, rating, wallet);
-      onClose();
+      const result = await rateContent(articleData, rating, wallet);
+      setTransactionHash(result);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error submitting rating:', error);
       // Handle error (e.g., show error message to user)
@@ -125,7 +126,10 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
       </div>
       <RatingSuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={() => {
+          setShowSuccessModal(false);
+          onClose();
+        }}
         title={articleTitle}
         rating={rating}
         transactionHash={transactionHash}

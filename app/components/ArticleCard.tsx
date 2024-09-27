@@ -71,7 +71,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
   const [imageError, setImageError] = useState(false);
   const [rating, setRating] = useState<number | null>(null); 
   const [isProgramInitialized, setIsProgramInitialized] = useState(false);
-  const [sourceData, setSourceData] = useState('');
+  const [sourceData, setSourceData] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeProgram = async () => {
@@ -92,7 +92,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select('verified, verified_by, signature, on_chain_verification')
+        .select('verified, verified_by, signature, on_chain_verification, verification_data')
         .eq('slug', slug)
         .maybeSingle();
 
@@ -103,12 +103,14 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
         setVerifier(data.verified_by);
         setSignature(data.signature);
         setOnChainVerification(data.on_chain_verification);
+        setSourceData(data.verification_data);
       } else {
         console.log('Article not found');
         setIsVerified(false);
         setVerifier(undefined);
         setSignature(null);
         setOnChainVerification(null);
+        setSourceData(null);
       }
     } catch (error) {
       console.error('Error fetching verification status:', error);
@@ -116,6 +118,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       setVerifier(undefined);
       setSignature(null);
       setOnChainVerification(null);
+      setSourceData(null);
     }
   }, [slug]);
 
@@ -255,7 +258,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
             <p className="text-sm text-gray-300 line-clamp-2">{description}</p>
             <div className="flex justify-between items-center text-xs text-gray-400">
               <span className="flex items-center"><FaUser className="mr-1 text-blue-400" /> {author}</span>
-              <span className="flex items-center"><FaCalendar className="mr-1 text-blue-600" /> {new Date(publishedAt).toLocaleDateString()}</span>
+              <span className="flex items-center"><FaCalendar className="mr-1 text-green-600" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-gray-300">⛓️ On-Chain Score: </span>
