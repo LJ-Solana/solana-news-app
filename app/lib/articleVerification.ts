@@ -237,9 +237,9 @@ export async function verifyArticle(
     const pda = getPDAFromContentHash(contentHash);
 
     // console.log('Generated content hash:', contentHash);
-    // console.log('Generated PDA:', pda.toBase58());
+    console.log('Generated PDA:', pda.toBase58());
 
-    console.log('Starting on-chain verification');
+    // console.log('Starting on-chain verification');
     const onChainSignature = await submitAndVerifyArticle(
       contentHash,
       true, 
