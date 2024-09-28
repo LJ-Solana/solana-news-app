@@ -22,27 +22,27 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
   articleDescription,
 }) => {
   const [rating, setRating] = useState(0);
-  const [sourceUrl, setSourceUrl] = useState('');
+  const [verificationData, setVerificationData] = useState('');
   const wallet = useWallet();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [transactionHash, setTransactionHash] = useState('');
 
   useEffect(() => {
-    const fetchSourceUrl = async () => {
+    const fetchVerificationData = async () => {
       const { data, error } = await supabase
         .from('articles')
-        .select('source_url')
+        .select('verification_data')
         .eq('title', articleTitle)
         .single();
 
       if (error) {
-        console.error('Error fetching source URL:', error);
+        console.error('Error fetching verification data:', error);
       } else if (data) {
-        setSourceUrl(data.source_url);
+        setVerificationData(data.verification_data);
       }
     };
 
-    fetchSourceUrl();
+    fetchVerificationData();
   }, [articleTitle]);
 
   if (!isVisible) return null;
@@ -86,10 +86,10 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
           </p>
           <div className="bg-gray-700 border-l-4 border-blue-500 text-gray-300 p-3 sm:p-6 mb-3 sm:mb-6 rounded-r">
             <p className="font-bold text-base sm:text-lg mb-2 sm:mb-3">Contribution:</p>
-            {sourceUrl && (
+            {verificationData && (
               <p className="text-sm sm:text-base break-words overflow-hidden">
                 <p className="text-blue-400">
-                  {sourceUrl}
+                  {verificationData}
                 </p>
               </p>
             )}
