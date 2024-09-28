@@ -22,10 +22,11 @@ import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import RatingInformationModal from '../../components/RatingInformationModal';
 import { queryContentRatings } from '../../lib/queryContentRatings';
 import { generateContentHash, getPDAFromContentHash } from '../../lib/articleVerification';
-import { getSolanaProgram } from '../../lib/solanaClient';
+import { getSolanaProgram, initializeSolanaProgram } from '../../lib/solanaClient';
 import { Program, Idl } from '@project-serum/anchor';
 import CountdownTimer from '../../components/CountdownTimer';
 import { FaClock } from 'react-icons/fa';
+import SourceDataModal from '../../components/SourceDataModal';
 
 
 export default function ArticlePage() {
@@ -45,6 +46,23 @@ export default function ArticlePage() {
   const [rating, setRating] = useState<number | null>(null);
   const [stars, setStars] = useState<JSX.Element | null>(null);
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
+  const [showSourceDataModal, setShowSourceDataModal] = useState(false);
+  const [isProgramInitialized, setIsProgramInitialized] = useState(false);
+
+  useEffect(() => {
+    const initializeProgram = async () => {
+      if (wallet.connected && wallet.publicKey) {
+        try {
+          await initializeSolanaProgram(wallet);
+          setIsProgramInitialized(true);
+        } catch (error) {
+          console.error('Failed to initialize Solana program:', error);
+        }
+      }
+    };
+
+    initializeProgram();
+  }, [wallet.connected, wallet.publicKey, wallet]);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -106,15 +124,18 @@ export default function ArticlePage() {
     }
   };
 
-  const handleVerification = async () => {
+  const handleVerification = () => {
     if (!wallet.connected || !wallet.publicKey) {
       toast.error('Please connect your wallet first');
       return;
     }
+    setShowSourceDataModal(true);
+  };
 
+  const handleSourceDataSubmit = async (submittedSourceData: string) => {
     setIsVerifying(true);
     try {
-      const message = `Verify article: ${slug}\nSource: ${article.source_url}`;
+      const message = `Verify article: ${slug}\nSource: ${submittedSourceData}`;
       const encodedMessage = new TextEncoder().encode(message);
       const signatureBytes = await wallet.signMessage!(encodedMessage);
       const base64Signature = Buffer.from(signatureBytes).toString('base64');
@@ -129,37 +150,39 @@ export default function ArticlePage() {
         urlToImage: article.urlToImage ?? '',
         description: article.description,
         slug: article.slug,
+        verifiedAt: article.verified_at,
       };
 
       const result = await verifyArticle(
         articleData,
-        wallet.publicKey.toString(),
+        wallet.publicKey?.toString() ?? '',
         base64Signature,
         wallet
       );
 
       if (result.success) {
-        setIsVerified(true);
-        // Fetch the updated article data
         const { data: updatedArticle, error } = await supabase
           .from('articles')
-          .select('*')
+          .update({
+            verified: true,
+            verified_by: wallet.publicKey?.toString(),
+            on_chain_verification: result.onChainSignature,
+            verified_at: new Date().toISOString(),
+            verification_data: submittedSourceData
+          })
           .eq('slug', slug)
           .single();
 
         if (error) {
-          console.error('Error fetching updated article:', error);
-          toast.error('Failed to fetch updated article data');
+          console.error('Error updating article:', error);
+          toast.error('Failed to update article data');
         } else if (updatedArticle) {
           setArticle(updatedArticle);
           setIsVerified(true);
-          setVerifier(wallet.publicKey.toString());
+          setVerifier(wallet.publicKey?.toString() ?? '');
           setOnChainVerification(result.onChainSignature || null);
-          setVerifiedAt(updatedArticle.verified_at);
+          setVerifiedAt(verifiedAt);
           toast.success('Article verified successfully');
-        } else {
-          console.warn('Updated article not found');
-          toast.warning('Article verified, but updated data not found');
         }
       } else {
         console.error('Verification failed:', result.message);
@@ -170,6 +193,7 @@ export default function ArticlePage() {
       toast.error('An error occurred during verification');
     } finally {
       setIsVerifying(false);
+      setShowSourceDataModal(false);
     }
   };
 
@@ -179,7 +203,7 @@ export default function ArticlePage() {
   };
 
   const fetchRating = useCallback(async () => {
-    if (wallet.connected && wallet.publicKey && onChainVerification && article) {
+    if (wallet.connected && wallet.publicKey && onChainVerification && article && isProgramInitialized) {
       try {
         const program = getSolanaProgram();
         const contentHash = generateContentHash({title: article.title, description: article.description});
@@ -193,7 +217,7 @@ export default function ArticlePage() {
     } else {
       setRating(null);
     }
-  }, [wallet.connected, wallet.publicKey, onChainVerification, article]);
+  }, [wallet.connected, wallet.publicKey, onChainVerification, article, isProgramInitialized]);
 
   useEffect(() => {
     fetchRating();
@@ -279,6 +303,50 @@ export default function ArticlePage() {
           style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
           className="rounded-lg mb-6"
         />
+          {/* verification info */}
+          <div className="mb-8 p-4 bg-gray-900 rounded-lg border border-gray-700 shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              {isVerified ? (
+                <span className="text-green-400 flex items-center text-sm">
+                  <FaCheckCircle className="mr-2" /> 
+                  Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
+                </span>
+              ) : (
+                <span className="text-red-400 flex items-center text-sm">
+                  <FaTimesCircle className="mr-2" /> Unverified
+                </span>
+              )}
+            </div>
+            {isVerified && onChainVerification && (
+              <a 
+                href={`https://solana.fm/tx/${onChainVerification}?cluster=devnet-solana`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-400 hover:text-blue-300 underline text-sm"
+              >
+                On-Chain Tx: {`${onChainVerification.slice(0, 4)}...${onChainVerification.slice(-4)}`}
+              </a>
+            )}
+          </div>
+          {isVerified && verifiedAt && (
+            <div className="mt-4 p-3 bg-gray-800 rounded-lg">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-300">
+                  Time left to rate:
+                </span>
+                <span className="text-yellow-400 flex items-center">
+                  <FaClock className="mr-2" />
+                  <CountdownTimer
+                    startDate={new Date(verifiedAt)}
+                    duration={3 * 24 * 60 * 60 * 1000}
+                    endText="Ratings Closed"
+                  />
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <button
             onClick={() => handleVerification()}
@@ -310,51 +378,6 @@ export default function ArticlePage() {
             <span>Rate Contribution</span>
           </button>
         </div>
-        {/* Add this new section for verification info */}
-        <div className="mb-8 p-4 bg-gray-800 rounded-lg">
-          <div className="flex justify-between items-center">
-            <div>
-              {isVerified ? (
-                <span className="text-green-400 flex items-center">
-                  <FaCheckCircle className="mr-2" /> 
-                  Verified by {verifier ? `${verifier.slice(0, 4)}...${verifier.slice(-4)}` : 'Unknown'}
-                </span>
-              ) : (
-                <span className="text-red-400 flex items-center">
-                  <FaTimesCircle className="mr-2" /> Unverified
-                </span>
-              )}
-            </div>
-            {isVerified && onChainVerification && (
-              <a 
-                href={`https://solana.fm/tx/${onChainVerification}?cluster=devnet-solana`} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-pink-400 hover:text-pink-300 underline"
-              >
-                On-Chain Tx: {`${onChainVerification.slice(0, 4)}...${onChainVerification.slice(-4)}`}
-              </a>
-            )}
-          </div>
-          {isVerified && verifiedAt && (
-        <div className="mb-8 p-4 bg-gray-800 rounded-lg">
-          <div className="flex justify-between items-center text-md">
-            <span className="text-yellow-400">
-              Time left to rate:
-            </span>
-            <span className="text-yellow-400 flex items-center">
-              <FaClock className="mr-1" />
-              <CountdownTimer
-                startDate={new Date(verifiedAt)}
-                duration={3 * 24 * 60 * 60 * 1000}
-                endText="Ratings Closed"
-              />
-            </span>
-          </div>
-        </div>
-      )}
-        </div>
-        <hr className="border-t border-gray-700 my-6" />
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
           <div className="mb-8">
             <h3 className="text-xl sm:text-2xl font-semibold mb-4 justify-between flex items-center">
@@ -370,6 +393,15 @@ export default function ArticlePage() {
                 />
               </div>
             </h3>
+            {article.verification_data && (
+              <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-700 shadow-md">
+                <h4 className="text-lg font-semibold mb-2 text-blue-400 flex items-center">
+                  <LinkIcon className="mr-2" />
+                   Independent Contributor Added:
+                </h4>
+                <p className="text-md text-gray-300 leading-relaxed">{article.verification_data}</p>
+              </div>
+            )}
             <RatingInformationModal isOpen={showRatingInfo} onClose={() => setShowRatingInfo(false)} />
             {isVerified ? (
               <>
@@ -482,6 +514,15 @@ export default function ArticlePage() {
           </div>
         </div>
       </footer>
+      {showSourceDataModal && (
+        <SourceDataModal
+          isOpen={showSourceDataModal}
+          onClose={() => setShowSourceDataModal(false)}
+          onSubmit={handleSourceDataSubmit}
+          articleTitle={article.title}
+          articleSlug={slug as string}
+        />
+      )}
     </div>
   );
 }
