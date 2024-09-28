@@ -11,14 +11,15 @@ import USDCBalanceButton from './components/USDCBalanceButton';
 import { supabase } from './lib/supabaseClient';
 import WarningBanner from './components/WarningBanner';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { ArticleCardProps } from './components/ArticleCard';
 
 export default function Home() {
   const {filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles, hasMore } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
-  const [verifiedArticles, setVerifiedArticles] = useState<[]>([]);
+  const [verifiedArticles, setVerifiedArticles] = useState<ArticleCardProps[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<ArticleCardProps[]>([]);
   const [cardType, setCardType] = useState('grid'); 
 
   const toggleActions = () => {
@@ -38,8 +39,16 @@ export default function Home() {
       if (error) {
         console.error('Error fetching verified articles:', error);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setVerifiedArticles(data as any);
+        // Ensure the data structure matches the regular articles
+        const formattedData: ArticleCardProps[] = data.map(article => ({
+          ...article,
+          publishedAt: article.published_at || new Date().toISOString(),
+          urlToImage: article.url_to_image || '/placeholder-image.png',
+          source: {
+            name: article.source?.name || 'Unknown Source',
+          },
+        }));
+        setVerifiedArticles(formattedData);
       }
     }
   };
@@ -66,8 +75,15 @@ export default function Home() {
     if (error) {
       console.error('Error searching articles:', error);
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setSearchResults(data as any);
+      const formattedData: ArticleCardProps[] = data.map(article => ({
+        ...article,
+        publishedAt: article.published_at || new Date().toISOString(),
+        urlToImage: article.image_url || '/placeholder-image.png',
+        source: {
+          name: article.source?.name || 'Unknown Source',
+        },
+      }));
+      setSearchResults(formattedData);
     }
   };
 
@@ -211,7 +227,7 @@ export default function Home() {
             </button>
           </div>
           <InfiniteScroll
-            dataLength={filteredArticles.length}
+            dataLength={displayedArticles.length}
             next={loadMoreArticles}
             hasMore={hasMore}
             loader={
