@@ -306,7 +306,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
                   <FaClock className="mr-1" />
                   <CountdownTimer
                     startDate={new Date(verifiedAt)}
-                    duration={7 * 24 * 60 * 60 * 1000} // 7 days in milliseconds
+                    duration={3 * 24 * 60 * 60 * 1000}
                     endText="Ratings Closed"
                   />
                 </span>
