@@ -24,6 +24,8 @@ import { queryContentRatings } from '../../lib/queryContentRatings';
 import { generateContentHash, getPDAFromContentHash } from '../../lib/articleVerification';
 import { getSolanaProgram } from '../../lib/solanaClient';
 import { Program, Idl } from '@project-serum/anchor';
+import CountdownTimer from '../../components/CountdownTimer';
+import { FaClock } from 'react-icons/fa';
 
 
 export default function ArticlePage() {
@@ -42,6 +44,7 @@ export default function ArticlePage() {
   const [showRatingInfo, setShowRatingInfo] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [stars, setStars] = useState<JSX.Element | null>(null);
+  const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -61,6 +64,7 @@ export default function ArticlePage() {
         setIsVerified(data.verified || data.on_chain_verification !== null);
         setVerifier(data.verified_by);
         setOnChainVerification(data.on_chain_verification);
+        setVerifiedAt(data.verified_at);
       }
       setLoading(false);
     }
@@ -323,6 +327,21 @@ export default function ArticlePage() {
               </a>
             )}
           </div>
+          {isVerified && verifiedAt && (
+          <div className="flex justify-between mt-4 text-md">
+            <span className="text-yellow-400">
+              Time left to rate:
+            </span>
+            <span className="text-yellow-400 flex items-center">
+              <FaClock className="mr-1" />
+              <CountdownTimer
+                startDate={new Date(verifiedAt)}
+                duration={3 * 24 * 60 * 60 * 1000}
+                endText="Ratings Closed"
+              />
+            </span>
+          </div>
+        )}
         </div>
         <hr className="border-t border-gray-700 my-6" />
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
