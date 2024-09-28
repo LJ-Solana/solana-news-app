@@ -38,10 +38,10 @@ export function generateContentHash(articleData: { title: string; description?: 
 
 // Function to get PDA from content hash
 export function getPDAFromContentHash(contentHash: string): web3.PublicKey {
-  console.log('Getting PDA for content hash:', contentHash);
+  // console.log('Getting PDA for content hash:', contentHash);
 
   const contentHashBuffer = Buffer.from(contentHash, 'hex');
-  console.log('Content Hash Buffer:', contentHashBuffer.toString('hex'));
+  // console.log('Content Hash Buffer:', contentHashBuffer.toString('hex'));
 
   const [pda] = web3.PublicKey.findProgramAddressSync(
     [Buffer.from('content'), contentHashBuffer],

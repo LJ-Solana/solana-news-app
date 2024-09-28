@@ -27,6 +27,7 @@ import { Program, Idl } from '@project-serum/anchor';
 import CountdownTimer from '../../components/CountdownTimer';
 import { FaClock } from 'react-icons/fa';
 import SourceDataModal from '../../components/SourceDataModal';
+import RateContributionModal from '../../components/RateContributionModal';
 
 
 export default function ArticlePage() {
@@ -48,6 +49,7 @@ export default function ArticlePage() {
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
   const [showSourceDataModal, setShowSourceDataModal] = useState(false);
   const [isProgramInitialized, setIsProgramInitialized] = useState(false);
+  const [showRateContributionModal, setShowRateContributionModal] = useState(false);
 
   useEffect(() => {
     const initializeProgram = async () => {
@@ -197,10 +199,6 @@ export default function ArticlePage() {
     }
   };
 
-  const handleRateArticle = () => {
-    // TODO: Implement article rating logic
-    console.log('Rate article clicked');
-  };
 
   const fetchRating = useCallback(async () => {
     if (wallet.connected && wallet.publicKey && onChainVerification && article && isProgramInitialized) {
@@ -303,6 +301,37 @@ export default function ArticlePage() {
           style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
           className="rounded-lg mb-6"
         />
+         <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+          <button
+            onClick={() => handleVerification()}
+            className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg ${
+              isVerified ? 'bg-blue-900 text-blue-300 cursor-not-allowed' : isVerifying ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-blue-800 text-blue-200 hover:bg-blue-700'
+            }`}
+            disabled={isVerified || isVerifying}
+          >
+            {isVerified ? (
+              <>
+                <FaCheckCircle className="inline-block mr-2" />
+                Verified
+              </>
+            ) : isVerifying ? (
+              'Verifying...'
+            ) : (
+              <>
+                Contribute 0.1
+                <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block ml-2 align-text-bottom" />
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => setShowRateContributionModal(true)}
+            className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg bg-yellow-800 text-yellow-200 hover:bg-yellow-700 flex items-center justify-center"
+            disabled={!isVerified}
+          >
+            <StarIcon className="mr-2" />
+            <span>Rate Contribution</span>
+          </button>
+        </div>
           {/* verification info */}
           <div className="mb-8 p-4 bg-gray-900 rounded-lg border border-gray-700 shadow-md">
           <div className="flex justify-between items-center mb-4">
@@ -347,37 +376,7 @@ export default function ArticlePage() {
             </div>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
-          <button
-            onClick={() => handleVerification()}
-            className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg ${
-              isVerified ? 'bg-blue-900 text-blue-300 cursor-not-allowed' : isVerifying ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-blue-800 text-blue-200 hover:bg-blue-700'
-            }`}
-            disabled={isVerified || isVerifying}
-          >
-            {isVerified ? (
-              <>
-                <FaCheckCircle className="inline-block mr-2" />
-                Verified
-              </>
-            ) : isVerifying ? (
-              'Verifying...'
-            ) : (
-              <>
-                Contribute 0.1
-                <Image src="/stakeSOL-logo.png" alt="USDC Logo" width={16} height={16} className="inline-block ml-2 align-text-bottom" />
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleRateArticle}
-            className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-md font-semibold transition duration-300 text-base sm:text-lg bg-yellow-800 text-yellow-200 hover:bg-yellow-700 flex items-center justify-center"
-            disabled={!isVerified}
-          >
-            <StarIcon className="mr-2" />
-            <span>Rate Contribution</span>
-          </button>
-        </div>
+      
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
           <div className="mb-8">
             <h3 className="text-xl sm:text-2xl font-semibold mb-4 justify-between flex items-center">
@@ -521,6 +520,16 @@ export default function ArticlePage() {
           onSubmit={handleSourceDataSubmit}
           articleTitle={article.title}
           articleSlug={slug as string}
+        />
+      )}
+      {showRateContributionModal && (
+        <RateContributionModal
+          isVisible={showRateContributionModal}
+          onClose={() => setShowRateContributionModal(false)}
+          articleTitle={article.title}
+          articleDescription={article.description}
+          articleSource={article.source}
+          articleSourceUrl={article.source_url}
         />
       )}
     </div>
