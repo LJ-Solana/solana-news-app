@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaStar } from 'react-icons/fa';
+import { FaUser, FaCalendar, FaCheckCircle, FaTimesCircle, FaStar, FaClock } from 'react-icons/fa';
 import { useWallet } from '@solana/wallet-adapter-react';
 import VerificationModal from '../components/VerificationModal';
 import SourceDataModal from '../components/SourceDataModal';
@@ -12,6 +12,7 @@ import AlertPopup from './AlertPopUp';
 import { queryContentRatings } from '../lib/queryContentRatings';
 import { getPDAFromContentHash, generateContentHash } from '../lib/articleVerification';
 import { getSolanaProgram, initializeSolanaProgram } from '../lib/solanaClient';
+import CountdownTimer from '../components/CountdownTimer';
 import { Program, Idl, } from '@project-serum/anchor';
 import { toast } from 'react-toastify';
 
@@ -67,6 +68,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
   const [isVerifying, setIsVerifying] = useState(false);
   const wallet = useWallet();
   const [onChainVerification, setOnChainVerification] = useState<string | null>(null);
+  const [verifiedAt, setVerifiedAt] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
   const [imageError, setImageError] = useState(false);
   const [rating, setRating] = useState<number | null>(null); 
@@ -93,7 +95,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select('verified, verified_by, signature, on_chain_verification, verification_data')
+        .select('verified, verified_by, signature, on_chain_verification, verification_data, verified_at')
         .eq('slug', slug)
         .maybeSingle();
 
@@ -105,6 +107,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
         setSignature(data.signature);
         setOnChainVerification(data.on_chain_verification);
         setSourceData(data.verification_data);
+        setVerifiedAt(data.verified_at);
       } else {
         console.log('Article not found');
         setIsVerified(false);
@@ -112,6 +115,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
         setSignature(null);
         setOnChainVerification(null);
         setSourceData(null);
+        setVerifiedAt(null);
       }
     } catch (error) {
       console.error('Error fetching verification status:', error);
@@ -120,6 +124,7 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
       setSignature(null);
       setOnChainVerification(null);
       setSourceData(null);
+      setVerifiedAt(null);
     }
   }, [slug]);
 
@@ -261,15 +266,15 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
               <span className="flex items-center"><FaUser className="mr-1 text-blue-400" /> {author}</span>
               <span className="flex items-center"><FaCalendar className="mr-1 text-green-600" /> {new Date(publishedAt).toLocaleDateString()}</span>
             </div>
+            <div className="text-xs text-gray-300 flex items-center justify-between">
+              <span>🔍 Source: {source_url}</span>
+              <span>{icon && typeof icon === 'string' ? icon : null} {category}</span>
+            </div>
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-gray-300">⛓️ On-Chain Score: </span>
               <div className="flex items-center">
                 {renderStars()}
               </div>
-            </div>
-            <div className="text-xs text-gray-300 flex items-center justify-between">
-              <span>Source: {source_url}</span>
-              <span>{icon && typeof icon === 'string' ? icon : null} {category}</span>
             </div>
             <div className="text-xs flex justify-between mt-2">
               <div className="flex flex-col">
@@ -285,13 +290,28 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
                 )}
               </div>
               <div className="flex flex-col text-right">
-                {isVerified && onChainVerification ? (
+                {isVerified && onChainVerification && (
                   <a href={`https://solana.fm/tx/${onChainVerification}?cluster=devnet-solana`} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 underline">
                     Signature: {`${onChainVerification.slice(0, 4)}...${onChainVerification.slice(-4)}`}
                   </a>
-                ) : null}
+                )}
               </div>
             </div>
+            {isVerified && onChainVerification && verifiedAt && (
+              <div className="flex justify-between mt-2 text-md">
+                <span className="text-yellow-400">
+                  Time left to rate:
+                </span>
+                <span className="text-yellow-400 flex items-center">
+                  <FaClock className="mr-1" />
+                  <CountdownTimer
+                    startDate={new Date(verifiedAt)}
+                    duration={7 * 24 * 60 * 60 * 1000} // 7 days in milliseconds
+                    endText="Ratings Closed"
+                  />
+                </span>
+              </div>
+            )}
           </div>
         <div className="px-4 pb-4 mt-auto flex flex-col space-y-2">
           <Link href={`/article/${slug}`} className="w-full">
