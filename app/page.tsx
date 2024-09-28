@@ -78,7 +78,7 @@ export default function Home() {
       const formattedData: ArticleCardProps[] = data.map(article => ({
         ...article,
         publishedAt: article.published_at || new Date().toISOString(),
-        urlToImage: article.image_url || '/placeholder-image.png',
+        urlToImage: article.url_to_image || '/placeholder-image.png',
         source: {
           name: article.source?.name || 'Unknown Source',
         },
