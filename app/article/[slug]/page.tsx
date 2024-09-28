@@ -403,8 +403,7 @@ export default function ArticlePage() {
                 />
               </div>
             </h3>
-            <div className="flex flex-col items-center mt-16 mb-8">
-            <div className="flex flex-col items-center mt-16 mb-8">
+            <div className="flex flex-col items-center mt-8 mb-8">
               <div className="flex justify-center mb-2">
                   {stars}
                 </div>
@@ -419,7 +418,6 @@ export default function ArticlePage() {
                   )}
                 </span>
               </div>
-            </div>
             <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
               This score represents the average rating given by contributors.
             </p>
