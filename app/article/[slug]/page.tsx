@@ -152,6 +152,10 @@ export default function ArticlePage() {
           toast.error('Failed to fetch updated article data');
         } else if (updatedArticle) {
           setArticle(updatedArticle);
+          setIsVerified(true);
+          setVerifier(wallet.publicKey.toString());
+          setOnChainVerification(result.onChainSignature || null);
+          setVerifiedAt(updatedArticle.verified_at);
           toast.success('Article verified successfully');
         } else {
           console.warn('Updated article not found');
@@ -199,7 +203,12 @@ export default function ArticlePage() {
     if (!onChainVerification) {
       setStars(<span className="text-gray-400 text-xs">Not Verified On-Chain</span>);
     } else if (rating === null) {
-      setStars(<span className="text-gray-400 text-xs">No Ratings Yet</span>);
+      setStars(
+        <div className="flex items-center">
+          <FaTimesCircle className="text-red-500 mr-2 text-lg" />
+          <span className="text-red-500 text-lg">No Ratings Yet</span>
+        </div>
+      );
     } else {
       setStars(
         <>
@@ -328,7 +337,8 @@ export default function ArticlePage() {
             )}
           </div>
           {isVerified && verifiedAt && (
-          <div className="flex justify-between mt-4 text-md">
+        <div className="mb-8 p-4 bg-gray-800 rounded-lg">
+          <div className="flex justify-between items-center text-md">
             <span className="text-yellow-400">
               Time left to rate:
             </span>
@@ -341,7 +351,8 @@ export default function ArticlePage() {
               />
             </span>
           </div>
-        )}
+        </div>
+      )}
         </div>
         <hr className="border-t border-gray-700 my-6" />
         <div className="prose prose-lg max-w-none text-gray-300 mb-12">
@@ -408,14 +419,7 @@ export default function ArticlePage() {
                   {stars}
                 </div>
                 <span className="text-xl flex items-center">
-                  {rating !== null ? (
-                    rating.toFixed(1)
-                  ) : (
-                    <>
-                      <FaTimesCircle className="text-red-500 mr-2" />
-                      <span className="text-red-500">Not rated yet</span>
-                    </>
-                  )}
+                  {rating !== null && rating.toFixed(1)}
                 </span>
               </div>
             <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
