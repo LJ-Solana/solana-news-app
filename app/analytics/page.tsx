@@ -8,7 +8,7 @@ const programId = new PublicKey('DcyZJhRUd96TAEYV7a7rWofy6kz9QAqsji4fftcox89y');
 
 const AnalyticsPage: React.FC = () => {
   const [contentCount, setContentCount] = useState<number>(0);
-  const [ratingCount, setRatingCount] = useState<number>(0);
+  const [totalRatings, setTotalRatings] = useState<number>(0);
   const [averageRating, setAverageRating] = useState<string>('0');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,12 +54,22 @@ const AnalyticsPage: React.FC = () => {
       const { totalRatings, averageRating } = calculateTotalRatings(contentAccounts);
 
       setContentCount(contentAccounts.length);
-      setRatingCount(totalRatings);
+      setTotalRatings(totalRatings);
       setAverageRating(averageRating);
     } catch (error) {
       console.error('Failed to fetch program accounts:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    } else {
+      return num.toString();
     }
   };
 
@@ -74,34 +84,34 @@ const AnalyticsPage: React.FC = () => {
         </header>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
-                <h2 className="text-2xl font-bold mb-2">All On-Chain Articles</h2>
-                {isLoading ? (
-                <p className="text-xl">Loading...</p>
-                ) : (
-                <p className="text-4xl font-bold text-green-400">
-                    <FaNewspaper className="inline-block mr-2" />
-                    {contentCount}
-                </p>
-                )}
-            </div>
-          <div className="bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-2">All On-Chain Ratings</h2>
+          <div className="bg-gray-800 shadow-lg rounded-lg p-6 mb-8 flex flex-col items-center justify-center">
+            <h2 className="text-2xl font-bold mb-2 text-center">All On-Chain Articles</h2>
             {isLoading ? (
-              <p className="text-xl">Loading...</p>
+              <p className="text-xl text-center">Loading...</p>
             ) : (
-              <p className="text-4xl font-bold text-purple-400">
-                <FaStar className="inline-block mr-2" />
-                {ratingCount}
+              <p className="text-4xl font-bold text-green-400 text-center">
+                <FaNewspaper className="inline-block mr-2" />
+                {contentCount}
               </p>
             )}
           </div>
-          <div className="bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-2">Average Rating</h2>
+          <div className="bg-gray-800 shadow-lg rounded-lg p-6 mb-8 flex flex-col items-center justify-center">
+            <h2 className="text-2xl font-bold mb-2 text-center">Total Ratings</h2>
             {isLoading ? (
-              <p className="text-xl">Loading...</p>
+              <p className="text-xl text-center">Loading...</p>
             ) : (
-              <p className="text-4xl font-bold text-yellow-400">
+              <p className="text-4xl font-bold text-purple-400 text-center">
+                <FaStar className="inline-block mr-2" />
+                {formatNumber(totalRatings)}
+              </p>
+            )}
+          </div>
+          <div className="bg-gray-800 shadow-lg rounded-lg p-6 mb-8 flex flex-col items-center justify-center">
+            <h2 className="text-2xl font-bold mb-2 text-center">Average Rating</h2>
+            {isLoading ? (
+              <p className="text-xl text-center">Loading...</p>
+            ) : (
+              <p className="text-4xl font-bold text-yellow-400 text-center">
                 <FaStar className="inline-block mr-2" />
                 {averageRating}
               </p>
