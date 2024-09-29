@@ -112,6 +112,7 @@ const AnalyticsPage: React.FC = () => {
       legend: {
         position: 'top' as const,
       },
+
     },
   };
 

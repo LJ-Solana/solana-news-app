@@ -100,7 +100,7 @@ export type NewsContent = {
   ],
   "accounts": [
     {
-      "name": "content",
+      "name": "Content",
       "type": {
         "kind": "struct",
         "fields": [
@@ -149,6 +149,10 @@ export type NewsContent = {
           {
             "name": "sumOfRatings",
             "type": "u64"
+          },
+          {
+            "name": "ratingEndTime",
+            "type": "i64"
           },
           {
             "name": "ratings",
@@ -232,18 +236,23 @@ export type NewsContent = {
     },
     {
       "code": 6009,
-      "name": "MaxRatingsReached",
-      "msg": "Maximum number of ratings reached for this content"
-    },
-    {
-      "code": 6010,
       "name": "ContentHashMismatch",
       "msg": "Content hash mismatch"
     },
     {
-      "code": 6011,
+      "code": 6010,
       "name": "AlreadyRated",
       "msg": "User has already rated this content"
+    },
+    {
+      "code": 6011,
+      "name": "CannotRateOwnContent",
+      "msg": "Cannot rate your own content"
+    },
+    {
+      "code": 6012,
+      "name": "RatingPeriodClosed",
+      "msg": "Rating period has closed for this content"
     }
   ]
 };
@@ -350,7 +359,7 @@ export const IDL: NewsContent = {
   ],
   "accounts": [
     {
-      "name": "content",
+      "name": "Content",
       "type": {
         "kind": "struct",
         "fields": [
@@ -399,6 +408,10 @@ export const IDL: NewsContent = {
           {
             "name": "sumOfRatings",
             "type": "u64"
+          },
+          {
+            "name": "ratingEndTime",
+            "type": "i64"
           },
           {
             "name": "ratings",
@@ -482,18 +495,23 @@ export const IDL: NewsContent = {
     },
     {
       "code": 6009,
-      "name": "MaxRatingsReached",
-      "msg": "Maximum number of ratings reached for this content"
-    },
-    {
-      "code": 6010,
       "name": "ContentHashMismatch",
       "msg": "Content hash mismatch"
     },
     {
-      "code": 6011,
+      "code": 6010,
       "name": "AlreadyRated",
       "msg": "User has already rated this content"
+    },
+    {
+      "code": 6011,
+      "name": "CannotRateOwnContent",
+      "msg": "Cannot rate your own content"
+    },
+    {
+      "code": 6012,
+      "name": "RatingPeriodClosed",
+      "msg": "Rating period has closed for this content"
     }
   ]
 };

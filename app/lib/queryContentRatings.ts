@@ -16,25 +16,40 @@ export async function queryContentRatings(program: Program, contentPDA: PublicKe
       };
     }
 
-    // Attempt to decode the account data
-    let contentAccount;
-    try {
-      contentAccount = program.coder.accounts.decode('content', accountInfo.data);
-    } catch (decodeError) {
-      console.error('Error decoding content account:', decodeError);
-      return {
-        totalRatings: 0,
-        sumOfRatings: 0,
-        averageRating: 0
-      };
-    }
+    let totalRatings = 0;
+    let sumOfRatings = 0;
 
-    // Extract the total ratings and sum of ratings
-    const totalRatings = contentAccount.totalRatings.toNumber();
-    const sumOfRatings = contentAccount.sumOfRatings.toNumber();
+    // Attempt to decode the account data
+    try {
+      const contentAccount = await program.account.content.fetch(contentPDA);
+      totalRatings = contentAccount.totalRatings.toNumber();
+      sumOfRatings = contentAccount.sumOfRatings.toNumber();
+    } catch (decodeError) {
+      // Manual extraction of data
+      const dataView = new DataView(accountInfo.data.buffer);
+      const dataLength = accountInfo.data.length;
+
+      // Attempt to find the totalRatings and sumOfRatings fields
+      for (let i = 0; i < dataLength - 8; i++) {
+        try {
+          const possibleTotalRatings = Number(dataView.getBigUint64(i, true));
+          const possibleSumOfRatings = Number(dataView.getBigUint64(i + 8, true));
+          
+          if (possibleTotalRatings <= possibleSumOfRatings && possibleSumOfRatings > 0) {
+            totalRatings = possibleTotalRatings;
+            sumOfRatings = possibleSumOfRatings;
+            break;
+          }
+        } catch (e) {
+          // Ignore errors and continue searching
+        }
+      }
+    }
 
     // Calculate the average rating
     const averageRating = totalRatings > 0 ? sumOfRatings / totalRatings : 0;
+
+    console.log('Extracted ratings data:', { totalRatings, sumOfRatings, averageRating });
 
     return {
       totalRatings,

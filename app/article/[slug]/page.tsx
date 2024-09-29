@@ -13,6 +13,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import StarIcon from '@mui/icons-material/Star';
 import InfoIcon from '@mui/icons-material/Info';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CommentBox from '../../components/commentBox';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { verifyArticle } from '../../lib/articleVerification';
@@ -395,8 +396,8 @@ export default function ArticlePage() {
             {article.verification_data && (
               <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-700 shadow-md">
                 <h4 className="text-lg font-semibold mb-2 text-blue-400 flex items-center">
-                  <LinkIcon className="mr-2" />
-                   Independent Contributor Added:
+                  <AccountCircleIcon className="mr-2" />
+                   Independent Contributor Addition:
                 </h4>
                 <p className="text-md text-gray-300 leading-relaxed">{article.verification_data}</p>
               </div>
