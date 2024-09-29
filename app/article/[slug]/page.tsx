@@ -269,10 +269,10 @@ export default function ArticlePage() {
         <meta property="og:url" content={`http://solana-news-app.vercel.app/article/${slug}`} />
         <meta property="og:type" content="article" />
         <meta property="og:site_name" content="Byte News" />
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:title" content={article.title} />
-        <meta property="twitter:description" content={article.description || 'Read the latest article on Byte News'} />
-        <meta property="twitter:image" content={article.url_to_image || '/placeholder-image.png'} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.description || 'Read the latest article on Byte News'} />
+        <meta name="twitter:image" content={article.url_to_image || '/placeholder-image.png'} />
       </Head>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
