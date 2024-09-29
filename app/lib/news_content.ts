@@ -96,6 +96,52 @@ export type NewsContent = {
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "finalizeContentRating",
+      "accounts": [
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "verifierUsdcTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -153,6 +199,10 @@ export type NewsContent = {
           {
             "name": "ratingEndTime",
             "type": "i64"
+          },
+          {
+            "name": "isFinalized",
+            "type": "bool"
           },
           {
             "name": "ratings",
@@ -253,6 +303,26 @@ export type NewsContent = {
       "code": 6012,
       "name": "RatingPeriodClosed",
       "msg": "Rating period has closed for this content"
+    },
+    {
+      "code": 6013,
+      "name": "RatingPeriodNotEnded",
+      "msg": "Rating period has not ended yet"
+    },
+    {
+      "code": 6014,
+      "name": "ContentAlreadyFinalized",
+      "msg": "Content rating has already been finalized"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidTreasuryAccount",
+      "msg": "Invalid treasury account"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidVerifierAccount",
+      "msg": "Invalid verifier account"
     }
   ]
 };
@@ -355,6 +425,52 @@ export const IDL: NewsContent = {
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "finalizeContentRating",
+      "accounts": [
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "verifierUsdcTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rewardTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "escrowAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -412,6 +528,10 @@ export const IDL: NewsContent = {
           {
             "name": "ratingEndTime",
             "type": "i64"
+          },
+          {
+            "name": "isFinalized",
+            "type": "bool"
           },
           {
             "name": "ratings",
@@ -512,6 +632,26 @@ export const IDL: NewsContent = {
       "code": 6012,
       "name": "RatingPeriodClosed",
       "msg": "Rating period has closed for this content"
+    },
+    {
+      "code": 6013,
+      "name": "RatingPeriodNotEnded",
+      "msg": "Rating period has not ended yet"
+    },
+    {
+      "code": 6014,
+      "name": "ContentAlreadyFinalized",
+      "msg": "Content rating has already been finalized"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidTreasuryAccount",
+      "msg": "Invalid treasury account"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidVerifierAccount",
+      "msg": "Invalid verifier account"
     }
   ]
 };
