@@ -1,5 +1,6 @@
 'use client';
 
+import Head from 'next/head';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -260,6 +261,19 @@ export default function ArticlePage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
+      <Head>
+        <title>{article.title}</title>
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.description || 'Read the latest article on Byte News'} />
+        <meta property="og:image" content={article.url_to_image || '/placeholder-image.png'} />
+        <meta property="og:url" content={`http://solana-news-app.vercel.app/article/${slug}`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Byte News" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:title" content={article.title} />
+        <meta property="twitter:description" content={article.description || 'Read the latest article on Byte News'} />
+        <meta property="twitter:image" content={article.url_to_image || '/placeholder-image.png'} />
+      </Head>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
           <button 
@@ -397,7 +411,7 @@ export default function ArticlePage() {
               <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-700 shadow-md">
                 <h4 className="text-lg font-semibold mb-2 text-blue-400 flex items-center">
                   <AccountCircleIcon className="mr-2" />
-                   Independent Contributor Addition:
+                   Independent Contributor Added:
                 </h4>
                 <p className="text-md text-gray-300 leading-relaxed">{article.verification_data}</p>
               </div>
