@@ -41,7 +41,7 @@ const NewsTokenPopup: React.FC<NewsTokenPopupProps> = ({ onClose }) => {
         <p className="text-base sm:text-lg mb-4 sm:mb-6">Hold at least <span className="font-bold text-yellow-400">0.25 News Tokens</span> to fully participate in our ecosystem:</p>
         <div className="flex justify-center">
           <a 
-            href="https://jup.ag/swap/SOL-stakeSO" 
+            href="https://jup.ag/swap/SOL-st8QujHLPsX3d6HG9uQg9kJ91jFxUgruwsb1hyYXSNd" 
             target="_blank" 
             rel="noopener noreferrer"
             className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 sm:py-3 sm:px-6 rounded-full transition duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base"
