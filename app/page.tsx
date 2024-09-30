@@ -107,13 +107,13 @@ export default function Home() {
         <WarningBanner />
       </div>
       <div className="container mx-auto px-4 py-8">
-        <header className="flex justify-between items-center mb-12">
-          <div className="text-left">
+        <header className="flex flex-col sm:flex-row justify-between items-center mb-12">
+          <div className="text-left mb-4 sm:mb-0">
             <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Byte News</h1>
             <p className="text-xl text-gray-300"><strong>Open Source</strong> for Cutting-Edge Updates</p>
           </div>
-          <WalletButton className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
-        </header> 
+          <WalletButton className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
+        </header>
         <div className="relative z-50 mb-8">
           <button 
             onClick={toggleActions}
