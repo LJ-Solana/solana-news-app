@@ -111,7 +111,7 @@ export default function Home() {
 
   return (
     <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
-      <div className="sticky top-0 z-1000">
+      <div className="sticky top-0 z-10">
         <WarningBanner />
       </div>
       <div className="container mx-auto px-4 py-8">
@@ -148,16 +148,6 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <div className="mb-8 relative">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search articles..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
-          />
-        </div>
         <section className="mb-8">
           <h2 className="text-3xl font-bold text-gray-100 mb-6 flex items-center">
             <FaNewspaper className="mr-2 text-green-400" />
@@ -178,6 +168,20 @@ export default function Home() {
               </button>
             ))}
           </div>
+          <h2 className="text-3xl font-bold text-gray-100 mt-8 mb-8 flex items-center">
+            <FaSearch className="mr-2 text-indigo-500" />
+            Search
+          </h2>
+          <div className="mt-8 mb-8 relative">
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search articles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
+          />
+        </div>
         </section>
         {!searchTerm && (
           <h2 className="text-3xl font-bold text-gray-100 flex mb-8 items-center">
