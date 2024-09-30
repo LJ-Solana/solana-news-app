@@ -12,7 +12,7 @@ const ClientWalletProvider = dynamic(
 )
 
 export const metadata: Metadata = {
-  title: 'Byte News | Blockchain Verified News',
+  title: 'Byte News | On-Chain Verified News',
   description: 'Stay updated with global, economically verified truthful news.',
 }
 
