@@ -12,15 +12,18 @@ import { supabase } from './lib/supabaseClient';
 import WarningBanner from './components/WarningBanner';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { ArticleCardProps } from './components/ArticleCard';
+import PaywallPopup from './components/PaywallPopUp';
 
 export default function Home() {
-  const {filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles, hasMore } = useNews();
+  const { filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles, hasMore } = useNews();
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [verifiedArticles, setVerifiedArticles] = useState<ArticleCardProps[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<ArticleCardProps[]>([]);
   const [cardType, setCardType] = useState('grid'); 
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
@@ -88,8 +91,13 @@ export default function Home() {
   };
 
   const loadMoreArticles = useCallback(async () => {
-    await fetchMoreArticles();
-  }, [fetchMoreArticles]);
+    if (currentPage === 1) {
+      setCurrentPage(2);
+      await fetchMoreArticles();
+    } else {
+      setShowPaywall(true);
+    }
+  }, [fetchMoreArticles, currentPage]);
 
   const displayedArticles = useMemo(() => {
     if (searchTerm) {
@@ -269,6 +277,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      {showPaywall && <PaywallPopup onClose={() => setShowPaywall(false)} />}
     </div>
   )
 }
