@@ -49,8 +49,6 @@ export async function queryContentRatings(program: Program, contentPDA: PublicKe
     // Calculate the average rating
     const averageRating = totalRatings > 0 ? sumOfRatings / totalRatings : 0;
 
-    console.log('Extracted ratings data:', { totalRatings, sumOfRatings, averageRating });
-
     return {
       totalRatings,
       sumOfRatings,
