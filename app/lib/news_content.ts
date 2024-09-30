@@ -79,6 +79,11 @@ export type NewsContent = {
           "isSigner": true
         },
         {
+          "name": "raterTokenAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -323,6 +328,26 @@ export type NewsContent = {
       "code": 6016,
       "name": "InvalidVerifierAccount",
       "msg": "Invalid verifier account"
+    },
+    {
+      "code": 6017,
+      "name": "InsufficientAccountAge",
+      "msg": "Wallet must be at least 2 weeks old to rate content"
+    },
+    {
+      "code": 6018,
+      "name": "InsufficientTokenBalance",
+      "msg": "Insufficient token balance to rate content"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidAccountData",
+      "msg": "Invalid account data"
     }
   ]
 };
@@ -408,6 +433,11 @@ export const IDL: NewsContent = {
           "isSigner": true
         },
         {
+          "name": "raterTokenAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -652,6 +682,26 @@ export const IDL: NewsContent = {
       "code": 6016,
       "name": "InvalidVerifierAccount",
       "msg": "Invalid verifier account"
+    },
+    {
+      "code": 6017,
+      "name": "InsufficientAccountAge",
+      "msg": "Wallet must be at least 2 weeks old to rate content"
+    },
+    {
+      "code": 6018,
+      "name": "InsufficientTokenBalance",
+      "msg": "Insufficient token balance to rate content"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidAccountData",
+      "msg": "Invalid account data"
     }
   ]
 };
