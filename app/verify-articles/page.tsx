@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FaArrowLeft, FaInfoCircle, FaStar, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaInfoCircle, FaStar, FaExclamationTriangle, FaPencilAlt } from 'react-icons/fa';
 import WalletButton from '../components/WalletButton';
 import USDCBalanceButton from '../components/USDCBalanceButton';
 
@@ -83,7 +83,7 @@ export default function VerifyArticlePage() {
               <FaInfoCircle className="text-blue-400 mr-2 mt-1 flex-shrink-0" />
               This rating system encourages high-quality contributions while deterring low-effort or inappropriate submissions.
             </p>
-            <div className="bg-gray-700 border-l-4 border-blue-500 p-6 mt-6">
+            <div className="bg-gray-700 border-l-4 border-blue-500 p-6 mt-6 rounded-lg">
               <p className="font-semibold mb-2">Important:</p>
               <p>
                 Ensure you have at least 0.25 worth of News Tokens in your wallet before attempting to contribute an article. 
@@ -91,9 +91,9 @@ export default function VerifyArticlePage() {
               </p>
             </div>
           </div>
-          <div className="mt-8">
-            <Link href="/" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded transition duration-300">
-              Start Contributing Articles
+          <div className="mt-8 flex justify-center">
+            <Link href="/" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded transition duration-300 flex items-center">
+              <FaPencilAlt className="mr-2" /> Start Contributing Articles
             </Link>
           </div>
         </main>
