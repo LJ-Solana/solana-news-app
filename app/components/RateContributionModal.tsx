@@ -68,7 +68,7 @@ const RateContributionModal: React.FC<RateContributionModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-800 p-4 sm:p-8 rounded-lg max-w-3xl w-full h-[90vh] sm:h-[75vh] overflow-y-auto relative">
+        <div className="bg-gray-800 p-4 sm:p-8 rounded-lg max-w-3xl w-full h-[90vh] sm:h-[75vh] md:h-auto md:max-h-[90vh] overflow-y-auto relative">
           <button
             onClick={onClose}
             className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-200 transition-colors duration-200"
