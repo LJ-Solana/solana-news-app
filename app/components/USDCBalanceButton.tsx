@@ -63,9 +63,8 @@ const USDCBalanceButton: React.FC = () => {
       </button>
 
       {showPopup && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl text-gray-200 relative w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <button 
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+     <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 sm:p-8 rounded-xl shadow-2xl text-gray-200 relative w-full max-w-md mx-auto">    <button 
               onClick={closePopup}
               className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-200 transition duration-300"
             >
