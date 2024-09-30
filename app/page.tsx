@@ -117,7 +117,7 @@ export default function Home() {
             <WalletButton className="w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
           </div>
         </header>
-        <div className="relative z-50 mb-8">
+        <div className="relative z-40 mb-8">
           <button 
             onClick={toggleActions}
             className="bg-indigo-700 hover:bg-indigo-800 text-white px-6 py-4 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md"
