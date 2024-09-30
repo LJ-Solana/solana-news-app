@@ -25,3 +25,36 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+.wallet-adapter-button-trigger {
+  background-color: transparent !important;
+  color: #4f46e5 !important; /* indigo-600 */
+  font-weight: 600 !important;
+  padding: 0.75rem 1.5rem !important; /* py-3 px-6 */
+  border-radius: 0.75rem !important; /* rounded-xl */
+  border: 2px solid #4f46e5 !important; /* indigo-600 */
+  transition: all 0.3s ease-in-out !important;
+}
+
+.wallet-adapter-button-trigger:hover {
+  background-color: rgba(79, 70, 229, 0.1) !important; /* indigo-600 with 10% opacity */
+  transform: translateY(-2px) !important;
+}
+
+.wallet-adapter-button-trigger:active {
+  transform: translateY(0) !important;
+}
+
+.wallet-adapter-button-trigger .wallet-adapter-button {
+  background-color: transparent !important;
+  padding: 0 !important;
+  height: auto !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: 1rem !important; /* text-base */
+  font-weight: inherit !important;
+}
+
+.wallet-adapter-button-trigger .wallet-adapter-button-start-icon {
+  margin-right: 0.5rem !important;
+}

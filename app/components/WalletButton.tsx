@@ -7,6 +7,10 @@ const WalletMultiButtonDynamic = dynamic(
   { ssr: false }
 );
 
-export default function WalletButton() {
-  return <WalletMultiButtonDynamic />;
+interface WalletButtonProps {
+  className?: string;
+}
+
+export default function WalletButton({ className }: WalletButtonProps) {
+  return <WalletMultiButtonDynamic className={className} />;
 }
