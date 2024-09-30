@@ -13,6 +13,8 @@ import WarningBanner from './components/WarningBanner';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { ArticleCardProps } from './components/ArticleCard';
 import PaywallPopup from './components/PaywallPopUp';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 export default function Home() {
   const { filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles, hasMore } = useNews();
@@ -24,6 +26,8 @@ export default function Home() {
   const [cardType, setCardType] = useState('grid'); 
   const [showPaywall, setShowPaywall] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const { publicKey } = useWallet();
+  const [newsTokenBalance, setNewsTokenBalance] = useState(0);
 
   const toggleActions = () => {
     setIsActionsOpen(!isActionsOpen);
@@ -68,6 +72,23 @@ export default function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
+  useEffect(() => {
+    const fetchNewsTokenBalance = async () => {
+      if (publicKey) {
+        const connection = new Connection('https://api.devnet.solana.com');
+        const newsTokenMint = new PublicKey('5ruoovCtJDSuQcrUU3LQ4yMZuSAVBGCc6885Qh6P2Vz9');
+        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, { mint: newsTokenMint });
+        
+        if (tokenAccounts.value.length > 0) {
+          const balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+          setNewsTokenBalance(balance);
+        }
+      }
+    };
+
+    fetchNewsTokenBalance();
+  }, [publicKey]);
+
   const searchArticles = async (term: string) => {
     const { data, error } = await supabase
       .from('articles')
@@ -94,10 +115,12 @@ export default function Home() {
     if (currentPage === 1) {
       setCurrentPage(2);
       await fetchMoreArticles();
-    } else {
+    } else if (newsTokenBalance < 0.25) {
       setShowPaywall(true);
+    } else {
+      await fetchMoreArticles();
     }
-  }, [fetchMoreArticles, currentPage]);
+  }, [fetchMoreArticles, currentPage, newsTokenBalance]);
 
   const displayedArticles = useMemo(() => {
     if (searchTerm) {
@@ -281,7 +304,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-      {showPaywall && <PaywallPopup onClose={() => setShowPaywall(false)} />}
+      {showPaywall && newsTokenBalance < 0.25 && <PaywallPopup onClose={() => setShowPaywall(false)} />}
     </div>
   )
 }
