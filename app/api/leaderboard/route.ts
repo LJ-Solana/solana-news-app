@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Program, AnchorProvider } from '@project-serum/anchor';
-import { IDL } from '../../lib/news_content'; // Assuming you have the IDL file
+import { IDL } from '../../lib/news_content'; 
 
-const PROGRAM_ID = new PublicKey('YOUR_PROGRAM_ID_HERE');
-const RPC_ENDPOINT = 'https://api.devnet.solana.com'; // Use mainnet in production
+const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID || '');
+const RPC_ENDPOINT = 'https://api.devnet.solana.com';
 
 export async function GET() {
   const connection = new Connection(RPC_ENDPOINT);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const provider = new AnchorProvider(connection, {} as any, {});
   const program = new Program(IDL, PROGRAM_ID, provider);
 
