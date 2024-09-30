@@ -1,6 +1,5 @@
 'use client';
 
-import Head from 'next/head';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -261,19 +260,33 @@ export default function ArticlePage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
-      <Head>
-        <title>{article.title}</title>
-        <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={article.description || 'Read the latest article on Byte News'} />
-        <meta property="og:image" content="/placeholder-image.png" />
-        <meta property="og:url" content={`https://www.byte.news/article/${slug}`} />
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="Byte News" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={article.title} />
-        <meta name="twitter:description" content={article.description || 'Read the latest article on Byte News'} />
-        <meta name="twitter:image" content="/placeholder-image.png" />
-      </Head>
+      {/* Remove the Head component as it's not supported in Next.js 13+ app directory */}
+      {/* Instead, use Next.js's Metadata API */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "NewsArticle",
+            "headline": article.title,
+            "description": article.description || 'Read the latest article on Byte News',
+            "image": article.url_to_image || '/placeholder-image.png',
+            "datePublished": article.published_at,
+            "author": {
+              "@type": "Person",
+              "name": article.author
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Byte News",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.byte.news/logo.png"
+              }
+            }
+          })
+        }}
+      />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
           <button 
