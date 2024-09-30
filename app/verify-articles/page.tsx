@@ -86,7 +86,7 @@ export default function VerifyArticlePage() {
             <div className="bg-gray-700 border-l-4 border-blue-500 p-6 mt-6">
               <p className="font-semibold mb-2">Important:</p>
               <p>
-                Ensure you have at least $5 worth of News Tokens in your wallet before attempting to contribute an article. 
+                Ensure you have at least 0.25 worth of News Tokens in your wallet before attempting to contribute an article. 
                 Insufficient funds will prevent you from participating in the contribution process.
               </p>
             </div>
