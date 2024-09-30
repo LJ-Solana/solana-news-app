@@ -24,13 +24,13 @@ export default function VerifyArticlePage() {
           <div className="space-y-6 text-gray-300">
             <p className="flex items-start">
               <FaInfoCircle className="text-blue-400 mr-2 mt-1 flex-shrink-0" />
-              To contribute an article, you need to deposit 0.05 worth of News Tokens into an escrow contract. 
+              To contribute an article, you need to deposit 0.1 worth of News Tokens into an escrow contract. 
               This helps ensure the quality and commitment of our contribution process.
             </p>
             <h2 className="text-2xl font-semibold text-gray-200">Escrow and Rating Process:</h2>
             <ol className="list-decimal list-inside space-y-4">
               <li>Connect your wallet containing News Tokens.</li>
-              <li>When you choose to contribute an article, 0.05 worth of News Tokens will be automatically deposited into the escrow contract.</li>
+              <li>When you choose to contribute an article, 0.1 worth of News Tokens will be automatically deposited into the escrow contract.</li>
               <li>This deposit is held securely while you complete the contribution process.</li>
               <li>After submission, your article enters a 3-day rating period set by the smart contract.</li>
               <li>During this period, community members can rate your contribution.</li>
