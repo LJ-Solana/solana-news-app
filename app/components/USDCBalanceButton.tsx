@@ -40,11 +40,13 @@ const USDCBalanceButton: React.FC = () => {
   }, [publicKey]);
 
   return (
-    <button className="bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold py-2 px-4 rounded border border-gray-200 h-[48px] flex items-center justify-center">
-      <Image src="/stakeSOL-logo.png" alt="stakeSOL Logo" width={24} height={24} unoptimized />
-      <span className="ml-2">
-        {balance !== null ? `${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'Loading...'}
-      </span>
+    <button className="wallet-adapter-button-trigger h-15 flex items-center">
+      <div className="wallet-adapter-button flex items-center">
+        <Image src="/stakeSOL-logo.png" alt="stakeSOL Logo" width={20} height={20} className="mr-2" unoptimized />
+        <span className="text-sm">
+          {balance !== null ? `${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'Loading...'}
+        </span>
+      </div>
     </button>
   );
 };

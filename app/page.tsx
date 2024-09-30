@@ -108,11 +108,14 @@ export default function Home() {
       </div>
       <div className="container mx-auto px-4 py-8">
         <header className="flex flex-col sm:flex-row justify-between items-center mb-12">
-          <div className="text-left mb-4 sm:mb-0">
+          <div className="text-center sm:text-left mb-4 sm:mb-0">
             <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Byte News</h1>
             <p className="text-xl text-gray-300"><strong>Open Source</strong> for Cutting-Edge Updates</p>
           </div>
-          <WalletButton className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
+          <div className="flex flex-row space-x-4">
+            <USDCBalanceButton />
+            <WalletButton className="w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
+          </div>
         </header>
         <div className="relative z-50 mb-8">
           <button 
@@ -135,12 +138,6 @@ export default function Home() {
                 <span className="font-medium text-lg">Leaderboard</span>
               </div>
             </Link>
-            <div className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-4 transition duration-300 mt-1">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-lg">Top Up News</span>
-                <USDCBalanceButton />
-              </div>
-            </div>
           </div>
         </div>
         <div className="mb-8 relative">
