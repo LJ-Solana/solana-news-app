@@ -4,13 +4,19 @@ import { toast } from 'react-toastify';
 import { getSolanaProgram } from './solanaClient';
 import { SendTransactionError } from '@solana/web3.js';
 import { generateContentHash, getPDAFromContentHash } from './articleVerification';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export const rateContent = async (articleData: { title: string; description: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
   const program = getSolanaProgram();
   const publicKey = wallet.publicKey;
   const signTransaction = wallet.signTransaction;
+
+  if (!wallet.connected) {
+    console.error('Wallet is not connected');
+    toast.error('Please connect your wallet before rating.');
+    throw new Error("Wallet not connected");
+  }
 
   console.log('Wallet public key:', publicKey?.toBase58());
 
@@ -55,6 +61,15 @@ export const rateContent = async (articleData: { title: string; description: str
       const NEWS_TOKEN_MINT = new web3.PublicKey('5ruoovCtJDSuQcrUU3LQ4yMZuSAVBGCc6885Qh6P2Vz9');
       const raterTokenAccount = await getAssociatedTokenAddress(NEWS_TOKEN_MINT, publicKey);
 
+      // Check if the token account exists
+      const tokenAccountInfo = await program.provider.connection.getAccountInfo(raterTokenAccount);
+      
+      if (!tokenAccountInfo) {
+        console.error('Token account does not exist');
+        toast.error('Token account does not exist. Please create it first.');
+        throw new Error('Token account does not exist. Please create it first.');
+      }
+
       console.log('Creating transaction for rating content');
       const tx = await program.methods.rateContent(Array.from(Buffer.from(contentHash, 'hex')), rating)
         .accounts({
@@ -62,6 +77,10 @@ export const rateContent = async (articleData: { title: string; description: str
           rater: publicKey,
           raterTokenAccount: raterTokenAccount,
           systemProgram: web3.SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          mint: NEWS_TOKEN_MINT, // Add the token mint
+          tokenAccount: raterTokenAccount, // Add the token account explicitly
+          rent: web3.SYSVAR_RENT_PUBKEY, 
         })
         .transaction();
 
@@ -69,25 +88,51 @@ export const rateContent = async (articleData: { title: string; description: str
       tx.recentBlockhash = (await program.provider.connection.getLatestBlockhash()).blockhash;
       tx.feePayer = publicKey;
 
-      const signedTx = await signTransaction(tx);
-      console.log('Transaction signed');
+      const MAX_RETRIES = 3;
+      let retries = 0;
+      while (retries < MAX_RETRIES) {
+        try {
+          const signedTx = await signTransaction(tx);
+          console.log('Transaction signed');
 
-      const txid = await program.provider.connection.sendRawTransaction(signedTx.serialize());
-      console.log('Transaction sent, ID:', txid);
+          const txid = await program.provider.connection.sendRawTransaction(signedTx.serialize());
+          console.log('Transaction sent, ID:', txid);
 
-      console.log('Confirming transaction');
-      await program.provider.connection.confirmTransaction(txid);
+          console.log('Confirming transaction');
+          await program.provider.connection.confirmTransaction(txid);
 
-      console.log("Rating submitted successfully. Transaction signature", txid);
-      toast.success('Rating has been added successfully', {
-        position: "bottom-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-      return txid;
+          console.log("Rating submitted successfully. Transaction signature", txid);
+          toast.success('Rating has been added successfully', {
+            position: "bottom-left",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+          return txid;
+        } catch (signError) {
+          console.error("Error signing transaction:", signError);
+          console.error("Error details:", JSON.stringify(signError, Object.getOwnPropertyNames(signError)));
+          retries++;
+          if (retries >= MAX_RETRIES) {
+            if (signError instanceof Error && signError.message.includes("invalid account")) {
+              toast.error('Failed to sign transaction. Please check your wallet connection and try again.', {
+                position: "bottom-left",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+              });
+            } else {
+              throw signError;
+            }
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second before retrying
+          }
+        }
+      }
     } else {
       console.log('Content account does not exist');
       throw new Error('Content account does not exist. Please verify the article first.');
