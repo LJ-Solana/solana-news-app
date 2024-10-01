@@ -344,10 +344,19 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({
             {isVerified && (
               <button
                 onClick={() => setShowRateContributionModal(true)}
-                className="flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm bg-yellow-900 text-yellow-300 hover:bg-yellow-800 flex items-center justify-center"
+                className={`flex-1 py-1.5 px-3 rounded-md font-medium transition duration-300 text-sm ${
+                  verifiedAt && new Date(verifiedAt).getTime() + 3 * 24 * 60 * 60 * 1000 > Date.now()
+                    ? 'bg-yellow-900 text-yellow-300 hover:bg-yellow-800'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                } flex items-center justify-center`}
+                disabled={!verifiedAt || new Date(verifiedAt).getTime() + 3 * 24 * 60 * 60 * 1000 <= Date.now()}
               >
                 <FaStar className="mr-1" />
-                <span>Rate Contribution</span>
+                <span>
+                  {verifiedAt && new Date(verifiedAt).getTime() + 3 * 24 * 60 * 60 * 1000 > Date.now()
+                    ? 'Rate Contribution'
+                    : 'Ratings Closed'}
+                </span>
               </button>
             )}
           </div>
