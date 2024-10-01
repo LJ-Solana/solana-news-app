@@ -1,5 +1,6 @@
 'use client';
 
+import Head from 'next/head';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -260,33 +261,19 @@ export default function ArticlePage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
-      {/* Remove the Head component as it's not supported in Next.js 13+ app directory */}
-      {/* Instead, use Next.js's Metadata API */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
-            "headline": article.title,
-            "description": article.description || 'Read the latest article on Byte News',
-            "image": article.url_to_image || '/placeholder-image.png',
-            "datePublished": article.published_at,
-            "author": {
-              "@type": "Person",
-              "name": article.author
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "Byte News",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://www.byte.news/logo.png"
-              }
-            }
-          })
-        }}
-      />
+      <Head>
+        <title>{article.title}</title>
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.description || 'Read the latest article on Byte News'} />
+        <meta property="og:image" content="/placeholder-image.png" />
+        <meta property="og:url" content={`https://www.byte.news/article/${slug}`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Byte News" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.description || 'Read the latest article on Byte News'} />
+        <meta name="twitter:image" content="/placeholder-image.png" />
+      </Head>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
           <button 
@@ -459,6 +446,33 @@ export default function ArticlePage() {
             )}
         </div>
         <hr className="border-t border-gray-700 my-6" />
+        <div className="mb-4">
+            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <ShowChartIcon className="mr-2 text-yellow-400" />
+                <span>On-Chain Score</span>
+              </div>
+              <div className="flex items-center">
+                <span className="mr-2">How it Works</span>
+                <InfoIcon 
+                  className="text-blue-400 cursor-pointer h-6 w-6" 
+                  onClick={() => setShowRatingInfo(!showRatingInfo)}
+                />
+              </div>
+            </h3>
+            <div className="flex flex-col items-center mt-8 mb-8">
+              <div className="flex justify-center mb-2">
+                  {stars}
+                </div>
+                <span className="text-xl flex items-center">
+                  {rating !== null && rating.toFixed(1)}
+                </span>
+              </div>
+            <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
+              This score represents the average rating given by contributors.
+            </p>
+            <hr className="border-t border-gray-700 mt-8" />
+        </div>
         <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
             <SmartToyIcon className="mr-2 text-green-400" />
             <span>AI Fact Check</span>
@@ -490,34 +504,6 @@ export default function ArticlePage() {
             </div>
           </div>
         )}
-        </div>
-        <hr className="border-t border-gray-700 mb-8" />
-        <div className="mb-4">
-            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <ShowChartIcon className="mr-2 text-yellow-400" />
-                <span>On-Chain Score</span>
-              </div>
-              <div className="flex items-center">
-                <span className="mr-2">How it Works</span>
-                <InfoIcon 
-                  className="text-blue-400 cursor-pointer h-6 w-6" 
-                  onClick={() => setShowRatingInfo(!showRatingInfo)}
-                />
-              </div>
-            </h3>
-            <div className="flex flex-col items-center mt-8 mb-8">
-              <div className="flex justify-center mb-2">
-                  {stars}
-                </div>
-                <span className="text-xl flex items-center">
-                  {rating !== null && rating.toFixed(1)}
-                </span>
-              </div>
-            <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
-              This score represents the average rating given by contributors.
-            </p>
-            <hr className="border-t border-gray-700 mt-8" />
         </div>
         <CommentBox articleId={article.id} />
       </main>

@@ -15,6 +15,7 @@ import { ArticleCardProps } from './components/ArticleCard';
 import PaywallPopup from './components/PaywallPopUp';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey } from '@solana/web3.js';
+import FaucetButton  from './components/FaucetButton';
 
 export default function Home() {
   const { filteredArticles, selectedCategory, setSelectedCategory, fetchMoreArticles, hasMore } = useNews();
@@ -144,6 +145,7 @@ export default function Home() {
             <p className="text-xl text-gray-300"><strong>Open Source</strong> for Cutting-Edge Updates</p>
           </div>
           <div className="flex flex-row space-x-4">
+            <FaucetButton />
             <USDCBalanceButton />
             <WalletButton className="w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
           </div>
