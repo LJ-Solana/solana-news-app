@@ -59,7 +59,7 @@ const FaucetButton: React.FC = () => {
     <button 
       onClick={handleFaucet}
       disabled={isLoading || !publicKey}
-      className="wallet-adapter-button-trigger h-15 flex items-center"
+      className="wallet-adapter-button-trigger h-12 flex items-center"
     >
       <FaCoins className="mr-2" />
       {isLoading ? 'Minting...' : 'Get NEWS Token'}

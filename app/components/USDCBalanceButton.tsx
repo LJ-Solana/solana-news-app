@@ -52,7 +52,7 @@ const USDCBalanceButton: React.FC = () => {
   return (
     <>
       <button 
-        className="wallet-adapter-button-trigger h-15 flex items-center"
+        className="wallet-adapter-button-trigger h-12 flex items-center"
         onClick={handleClick}
       >
         <div className="wallet-adapter-button flex items-center">
