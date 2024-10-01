@@ -73,11 +73,12 @@ export async function getArticleBySlug(slug: string): Promise<ArticleCardProps |
 }
 
 export const categories = {
-  "Technology": "🖥️",
-  "Science": "🔬",
-  "Business": "💼",
   "Politics": "🏛️",
-  "Environment": "🌿",
-  "Space": "🚀",
-  "Blockchain": "⛓️",
+  "Technology": "💻",
+  "Business": "💼",
+  "Sports": "🏅",
+  "Entertainment": "🎭",
+  "Health": "🏥",
+  "Science": "🔬",
+  "Environment": "🌍",
 };

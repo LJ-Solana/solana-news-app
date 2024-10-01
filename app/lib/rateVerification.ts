@@ -4,7 +4,8 @@ import { toast } from 'react-toastify';
 import { getSolanaProgram } from './solanaClient';
 import { SendTransactionError } from '@solana/web3.js';
 import { generateContentHash, getPDAFromContentHash } from './articleVerification';
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+
 
 export const rateContent = async (articleData: { title: string; description: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
@@ -72,27 +73,42 @@ export const rateContent = async (articleData: { title: string; description: str
 
       console.log('Creating transaction for rating content');
       const tx = await program.methods.rateContent(Array.from(Buffer.from(contentHash, 'hex')), rating)
-        .accounts({
-          content: contentPDA,
-          rater: publicKey,
-          raterTokenAccount: raterTokenAccount,
-          systemProgram: web3.SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          mint: NEWS_TOKEN_MINT, 
-          tokenAccount: raterTokenAccount, 
-          rent: web3.SYSVAR_RENT_PUBKEY, 
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, 
-          author: contentAccount.author, 
-        })
-        .transaction();
+      .accounts({
+        content: contentPDA,
+        rater: publicKey,
+        raterTokenAccount: raterTokenAccount,
+        systemProgram: web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        rent: web3.SYSVAR_RENT_PUBKEY,
+      })
+      .remainingAccounts([
+        {
+          pubkey: TOKEN_PROGRAM_ID,
+          isWritable: false,
+          isSigner: false,
+        },
+      ])
+      .transaction();
+
+      const { blockhash } = await program.provider.connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = publicKey;
+      
+      console.log('Transaction object:', tx);
+      console.log('Transaction message:', tx.compileMessage().toString());
+
+      // Log the accounts being used in the transaction
+      console.log('Transaction accounts:', tx.instructions[0].keys.map(k => ({
+        pubkey: k.pubkey.toBase58(),
+        isSigner: k.isSigner,
+        isWritable: k.isWritable
+      })));
 
       console.log('Getting latest blockhash');
       tx.recentBlockhash = (await program.provider.connection.getLatestBlockhash()).blockhash;
       tx.feePayer = publicKey;
-
       const MAX_RETRIES = 3;
-      let retries = 0;
-      while (retries < MAX_RETRIES) {
+      for (let retries = 0; retries < MAX_RETRIES; retries++) {
         try {
           const signedTx = await signTransaction(tx);
           console.log('Transaction signed');
@@ -101,7 +117,12 @@ export const rateContent = async (articleData: { title: string; description: str
           console.log('Transaction sent, ID:', txid);
 
           console.log('Confirming transaction');
-          await program.provider.connection.confirmTransaction(txid);
+          const confirmation = await program.provider.connection.confirmTransaction(txid, 'confirmed');
+          
+          if (confirmation.value.err) {
+            console.error('Transaction failed:', confirmation.value.err);
+            throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+          }
 
           console.log("Rating submitted successfully. Transaction signature", txid);
           toast.success('Rating has been added successfully', {
@@ -113,26 +134,13 @@ export const rateContent = async (articleData: { title: string; description: str
             draggable: true,
           });
           return txid;
-        } catch (signError) {
-          console.error("Error signing transaction:", signError);
-          console.error("Error details:", JSON.stringify(signError, Object.getOwnPropertyNames(signError)));
-          retries++;
-          if (retries >= MAX_RETRIES) {
-            if (signError instanceof Error && signError.message.includes("invalid account")) {
-              toast.error('Failed to sign transaction. Please check your wallet connection and try again.', {
-                position: "bottom-left",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-              });
-            } else {
-              throw signError;
-            }
-          } else {
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second before retrying
+        } catch (error) {
+          console.error("Error signing or sending transaction:", error);
+          if (error instanceof SendTransactionError) {
+            const logs = error.logs;
+            console.error("Transaction logs:", logs);
           }
+          // ... rest of the error handling code
         }
       }
     } else {
