@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { getSolanaProgram } from './solanaClient';
 import { SendTransactionError } from '@solana/web3.js';
 import { generateContentHash, getPDAFromContentHash } from './articleVerification';
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export const rateContent = async (articleData: { title: string; description: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
@@ -78,9 +78,11 @@ export const rateContent = async (articleData: { title: string; description: str
           raterTokenAccount: raterTokenAccount,
           systemProgram: web3.SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
-          mint: NEWS_TOKEN_MINT, // Add the token mint
-          tokenAccount: raterTokenAccount, // Add the token account explicitly
+          mint: NEWS_TOKEN_MINT, 
+          tokenAccount: raterTokenAccount, 
           rent: web3.SYSVAR_RENT_PUBKEY, 
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, 
+          author: contentAccount.author, 
         })
         .transaction();
 
