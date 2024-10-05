@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { createMint, createAssociatedTokenAccount, mintTo } from '@solana/spl-token';
 import { FaCoins } from 'react-icons/fa';
 
 const FaucetButton: React.FC = () => {
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFaucet = async () => {
-    if (!publicKey || !signTransaction) {
+    if (!publicKey) {
       alert('Please connect your wallet first');
       return;
     }
@@ -17,39 +15,28 @@ const FaucetButton: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+      const response = await fetch('/api/faucet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: publicKey.toBase58() }),
+      });
 
-      // Create a new mint account
-      const mint = await createMint(
-        connection,
-        { publicKey, signTransaction },
-        publicKey,
-        publicKey,
-        9 // 9 decimals for NEWS token
-      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Faucet request failed');
+      }
 
-      // Create an associated token account for the user
-      const tokenAccount = await createAssociatedTokenAccount(
-        connection,
-        { publicKey, signTransaction },
-        mint,
-        publicKey
-      );
-
-      // Mint 100 NEWS tokens to the user's account
-      await mintTo(
-        connection,
-        { publicKey },
-        mint,
-        tokenAccount,
-        publicKey,
-        100 * LAMPORTS_PER_SOL // 100 NEWS tokens
-      );
-
-      alert('Successfully minted 100 NEWS tokens to your account!');
+      const data = await response.json();
+      alert(data.message || 'Successfully minted 100 NEWS tokens to your account!');
     } catch (error) {
       console.error('Error minting tokens:', error);
-      alert('Failed to mint tokens. Please try again.');
+      if (error instanceof Error) {
+        alert(`Failed to mint tokens: ${error.message}`);
+      } else {
+        alert('Failed to mint tokens. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

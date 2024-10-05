@@ -73,22 +73,23 @@ export const rateContent = async (articleData: { title: string; description: str
 
       console.log('Creating transaction for rating content');
       const tx = await program.methods.rateContent(Array.from(Buffer.from(contentHash, 'hex')), rating)
-      .accounts({
-        content: contentPDA,
-        rater: publicKey,
-        raterTokenAccount: raterTokenAccount,
-        systemProgram: web3.SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        rent: web3.SYSVAR_RENT_PUBKEY,
-      })
-      .remainingAccounts([
-        {
-          pubkey: TOKEN_PROGRAM_ID,
-          isWritable: false,
-          isSigner: false,
-        },
-      ])
-      .transaction();
+        .accounts({
+          content: contentPDA,
+          rater: publicKey,
+          raterTokenAccount: raterTokenAccount,
+          systemProgram: web3.SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+          clock: web3.SYSVAR_CLOCK_PUBKEY,  // Add this line for the wallet age check
+        })
+        .remainingAccounts([
+          {
+            pubkey: TOKEN_PROGRAM_ID,
+            isWritable: false,
+            isSigner: false,
+          },
+        ])
+        .transaction();
 
       const { blockhash } = await program.provider.connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;

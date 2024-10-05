@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaArrowLeft, FaInfoCircle, FaStar, FaExclamationTriangle, FaPencilAlt } from 'react-icons/fa';
 import WalletButton from '../components/WalletButton';
 import USDCBalanceButton from '../components/USDCBalanceButton';
+import FaucetButton from '../components/FaucetButton';
 
 export default function VerifyArticlePage() {
   return (
@@ -15,6 +16,7 @@ export default function VerifyArticlePage() {
             <FaArrowLeft className="text-2xl" aria-label="Back to Home" />
           </Link>
           <div className="flex space-x-4">
+            <FaucetButton />
             <USDCBalanceButton />
             <WalletButton />
           </div>

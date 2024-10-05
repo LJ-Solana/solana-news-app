@@ -134,7 +134,7 @@ export default function Home() {
   }, [filteredArticles, showVerifiedOnly, verifiedArticles, searchTerm, searchResults]);
 
   return (
-    <div className="bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen text-gray-200">
+    <div className="bg-gray-900 min-h-screen text-gray-200">
       <div className="sticky top-0 z-10">
         <WarningBanner />
       </div>
