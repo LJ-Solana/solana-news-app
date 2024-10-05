@@ -26,6 +26,7 @@ export default function RootLayout({
       <head>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4330197715317619"
      crossOrigin="anonymous"></script>
+     <meta name="google-adsense-account" content="ca-pub-4330197715317619"></meta>
       </head>
       <body className={inter.className}>
         <ClientWalletProvider>{children}</ClientWalletProvider>
