@@ -47,7 +47,6 @@ export default function Home() {
       if (error) {
         console.error('Error fetching verified articles:', error);
       } else {
-        // Ensure the data structure matches the regular articles
         const formattedData: ArticleCardProps[] = data.map(article => ({
           ...article,
           publishedAt: article.published_at || new Date().toISOString(),
@@ -139,27 +138,26 @@ export default function Home() {
         <WarningBanner />
       </div>
       <div className="container mx-auto px-4 py-8">
-        <header className="flex flex-col  sm:flex-row justify-between items-center mb-12">
+        <header className="flex flex-col sm:flex-row justify-between items-center mb-12">
           <div className="text-center sm:text-left mb-4 sm:mb-0">
             <h1 className="text-5xl font-extrabold text-gray-100 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-green-300">Byte News</h1>
             <p className="text-xl text-gray-300"><strong>Open Source</strong> for Cutting-Edge Updates</p>
           </div>
           <div className="flex flex-row space-x-4">
-            {/* <FaucetButton /> */}
             <USDCBalanceButton />
-            <WalletButton className="w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out" />
+            <WalletButton className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" />
           </div>
         </header>
         <div className="relative z-40 mb-8">
           <button 
             onClick={toggleActions}
-            className="bg-indigo-700 hover:bg-indigo-800 text-white px-6 py-4 rounded-lg transition duration-300 flex items-center justify-between w-full shadow-md"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-between"
           >
-            <span className="font-semibold text-lg">Actions</span>
+            <span className="text-lg">Actions</span>
             <FaChevronDown className={`ml-2 transition-transform duration-300 ${isActionsOpen ? 'transform rotate-180' : ''}`} />
           </button>
           <div className={`absolute top-full left-0 right-0 bg-gray-800 shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${isActionsOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <Link href="/verify-articles" className="block w-full bg-indigo-700 hover:bg-indigo-800 text-white px-6 py-4 transition duration-300">
+            <Link href="/verify-articles" className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 transition duration-300">
               <div className="flex items-center">
                 <FaUserCheck className="mr-4 text-2xl" /> 
                 <span className="font-medium text-lg">Become a Verifier</span>
@@ -198,15 +196,15 @@ export default function Home() {
             Search
           </h2>
           <div className="mt-8 mb-8 relative">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search articles..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
-          />
-        </div>
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search articles..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-200"
+            />
+          </div>
         </section>
         {!searchTerm && (
           <h2 className="text-3xl font-bold text-gray-100 flex mb-8 items-center">
