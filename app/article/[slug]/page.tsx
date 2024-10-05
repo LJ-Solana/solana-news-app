@@ -445,34 +445,6 @@ export default function ArticlePage() {
               </>
             )}
         </div>
-        <hr className="border-t border-gray-700 my-6" />
-        <div className="mb-4">
-            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <ShowChartIcon className="mr-2 text-yellow-400" />
-                <span>On-Chain Score</span>
-              </div>
-              <div className="flex items-center">
-                <span className="mr-2">How it Works</span>
-                <InfoIcon 
-                  className="text-blue-400 cursor-pointer h-6 w-6" 
-                  onClick={() => setShowRatingInfo(!showRatingInfo)}
-                />
-              </div>
-            </h3>
-            <div className="flex flex-col items-center mt-8 mb-8">
-              <div className="flex justify-center mb-2">
-                  {stars}
-                </div>
-                <span className="text-xl flex items-center">
-                  {rating !== null && rating.toFixed(1)}
-                </span>
-              </div>
-            <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
-              This score represents the average rating given by contributors.
-            </p>
-            <hr className="border-t border-gray-700 mt-8" />
-        </div>
         <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center">
             <SmartToyIcon className="mr-2 text-green-400" />
             <span>AI Fact Check</span>
@@ -505,8 +477,37 @@ export default function ArticlePage() {
           </div>
         )}
         </div>
+        <hr className="border-t border-gray-700 my-6" />
+        <div className="mb-4">
+            <h3 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <ShowChartIcon className="mr-2 text-yellow-400" />
+                <span>On-Chain Score</span>
+              </div>
+              <div className="flex items-center">
+                <span className="mr-2">How it Works</span>
+                <InfoIcon 
+                  className="text-blue-400 cursor-pointer h-6 w-6" 
+                  onClick={() => setShowRatingInfo(!showRatingInfo)}
+                />
+              </div>
+            </h3>
+            <div className="flex flex-col items-center mt-8 mb-8">
+              <div className="flex justify-center mb-2">
+                  {stars}
+                </div>
+                <span className="text-xl flex items-center">
+                  {rating !== null && rating.toFixed(1)}
+                </span>
+              </div>
+            <p className="text-base sm:text-lg items-center text-center leading-relaxed mb-4">
+              This score represents the average rating given by contributors.
+            </p>
+            <hr className="border-t border-gray-700 mt-8" />
+        </div>
         <CommentBox articleId={article.id} />
       </main>
+      
       <footer className="bg-gradient-to-r from-gray-900 to-black text-gray-300 py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-between">
