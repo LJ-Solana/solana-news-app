@@ -2,10 +2,9 @@ import { WalletContextState } from '@solana/wallet-adapter-react';
 import { web3 } from '@project-serum/anchor';
 import { toast } from 'react-toastify'; 
 import { getSolanaProgram } from './solanaClient';
-import { SendTransactionError } from '@solana/web3.js';
+import { SendTransactionError  } from '@solana/web3.js';
 import { generateContentHash, getPDAFromContentHash } from './articleVerification';
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export const rateContent = async (articleData: { title: string; description: string }, rating: number, wallet: WalletContextState) => {
   console.log('Rating:', rating);
@@ -35,6 +34,10 @@ export const rateContent = async (articleData: { title: string; description: str
 
   const contentHash = generateContentHash(articleData);
   console.log('Generated content hash:', contentHash);
+  console.log('Content hash:', contentHash);
+  console.log('Content hash type:', typeof contentHash);
+  console.log('Rating:', rating);
+  console.log('Rating type:', typeof rating);
 
   const contentPDA = getPDAFromContentHash(contentHash);
   console.log('Content PDA for rating:', contentPDA.toBase58());
@@ -70,80 +73,87 @@ export const rateContent = async (articleData: { title: string; description: str
         toast.error('Token account does not exist. Please create it first.');
         throw new Error('Token account does not exist. Please create it first.');
       }
-
-      console.log('Creating transaction for rating content');
       const tx = await program.methods.rateContent(Array.from(Buffer.from(contentHash, 'hex')), rating)
-        .accounts({
-          content: contentPDA,
-          rater: publicKey,
-          raterTokenAccount: raterTokenAccount,
-          systemProgram: web3.SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          rent: web3.SYSVAR_RENT_PUBKEY,
-          clock: web3.SYSVAR_CLOCK_PUBKEY,  // Add this line for the wallet age check
-        })
-        .remainingAccounts([
-          {
-            pubkey: TOKEN_PROGRAM_ID,
-            isWritable: false,
-            isSigner: false,
-          },
-        ])
-        .transaction();
+      .accounts({
+        content: contentPDA,
+        rater: wallet.publicKey!,
+        raterTokenAccount: raterTokenAccount,
+        systemProgram: web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        clock: web3.SYSVAR_CLOCK_PUBKEY,
+        rent: web3.SYSVAR_RENT_PUBKEY,
+        mint: NEWS_TOKEN_MINT,
+        tokenAccount: raterTokenAccount,
+        authority: wallet.publicKey!,
+      })
+      .transaction();
 
-      const { blockhash } = await program.provider.connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
+      // Set the fee payer
       tx.feePayer = publicKey;
       
-      console.log('Transaction object:', tx);
-      console.log('Transaction message:', tx.compileMessage().toString());
-
-      // Log the accounts being used in the transaction
-      console.log('Transaction accounts:', tx.instructions[0].keys.map(k => ({
-        pubkey: k.pubkey.toBase58(),
-        isSigner: k.isSigner,
-        isWritable: k.isWritable
-      })));
-
+      console.log('Transaction object:', JSON.stringify(tx, (key, value) =>
+        typeof value === 'bigint'
+          ? value.toString()
+          : value // return everything else unchanged
+      ));
+      
+      // Get latest blockhash
       console.log('Getting latest blockhash');
-      tx.recentBlockhash = (await program.provider.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = publicKey;
-      const MAX_RETRIES = 3;
-      for (let retries = 0; retries < MAX_RETRIES; retries++) {
-        try {
-          const signedTx = await signTransaction(tx);
-          console.log('Transaction signed');
-
-          const txid = await program.provider.connection.sendRawTransaction(signedTx.serialize());
-          console.log('Transaction sent, ID:', txid);
-
-          console.log('Confirming transaction');
-          const confirmation = await program.provider.connection.confirmTransaction(txid, 'confirmed');
-          
-          if (confirmation.value.err) {
-            console.error('Transaction failed:', confirmation.value.err);
-            throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-          }
-
-          console.log("Rating submitted successfully. Transaction signature", txid);
-          toast.success('Rating has been added successfully', {
-            position: "bottom-left",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          });
-          return txid;
-        } catch (error) {
-          console.error("Error signing or sending transaction:", error);
-          if (error instanceof SendTransactionError) {
-            const logs = error.logs;
-            console.error("Transaction logs:", logs);
-          }
-          // ... rest of the error handling code
-        }
+      const latestBlockhash = await program.provider.connection.getLatestBlockhash();
+      tx.recentBlockhash = latestBlockhash.blockhash;
+      
+      // Sign transaction
+      console.log('Signing transaction');
+      if (!wallet || !wallet.signTransaction) {
+        throw new Error('Wallet is not connected or does not support signing');
       }
+
+      let signedTx;
+      try {
+        signedTx = await wallet.signTransaction(tx);
+      } catch (signError) {
+        console.error('Error signing transaction:', signError);
+        throw new Error('Failed to sign transaction');
+      }
+
+      if (!signedTx) {
+        throw new Error('Failed to sign transaction');
+      }
+
+      // Send transaction
+      console.log('Sending transaction');
+      let txId;
+      try {
+        txId = await program.provider.connection.sendRawTransaction(signedTx.serialize());
+        console.log('Transaction sent, ID:', txId);
+      } catch (sendError) {
+        console.error('Error sending transaction:', sendError);
+        throw new Error('Failed to send transaction');
+      }
+
+      console.log('Confirming transaction');
+      const confirmation = await program.provider.connection.confirmTransaction({
+        signature: txId,
+        blockhash: latestBlockhash.blockhash,
+        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+      });
+
+      if (confirmation.value.err) {
+        console.error('Transaction failed:', confirmation.value.err);
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+
+      console.log("Rating submitted successfully. Transaction signature", txId);
+      toast.success('Rating has been added successfully', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      return txId;
     } else {
       console.log('Content account does not exist');
       throw new Error('Content account does not exist. Please verify the article first.');
